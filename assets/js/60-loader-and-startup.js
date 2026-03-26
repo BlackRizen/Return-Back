@@ -258,13 +258,31 @@ document.addEventListener("DOMContentLoaded", () => {
       const _sm  = window.startMusic;
 
       window.startMenuMusic = function(){
+        window.__menuMusicWanted = true;
         try{
-          muteHtmlAudio();
-          ensurePlayback();
-          startTrack('menu');
-          return true;
+          if (state.buffers && state.buffers.menu){
+            muteHtmlAudio();
+            try{ state.current = 'menu'; }catch(_){}
+            ensurePlayback();
+            startTrack('menu');
+            return true;
+          }
         }
-        catch(_){ return _smm ? _smm() : false; }
+        catch(_){}
+        try{
+          return _smm ? !!_smm() : false;
+        }catch(_){}
+        try{
+          if (window.Sounds && Sounds.startBgm){
+            Sounds.startBgm.loop = true;
+            Sounds.startBgm.volume = Math.max(Sounds.startBgm.volume || 0, 0.9);
+            Sounds.startBgm.currentTime = 0;
+            const p = Sounds.startBgm.play();
+            if (p && typeof p.catch === 'function') p.catch(()=>{});
+            return true;
+          }
+        }catch(_){}
+        return false;
       };
       window.startMusic = function(){
         try{ muteHtmlAudio(); ensurePlayback(); startTrack('game'); return true; }
@@ -272,6 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       window.stopMenuMusic = function(){
+        try{ window.__menuMusicWanted = false; }catch(_){}
         try{
           if (window.Sounds && Sounds.startBgm){ Sounds.startBgm.pause(); Sounds.startBgm.currentTime = 0; }
         }catch(_){}
@@ -331,6 +350,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }catch(_){}
         return false;
       };
+
+      try{
+        if (window.__menuMusicWanted && typeof window.startMenuMusic === 'function'){
+          window.startMenuMusic();
+        }
+      }catch(_){}
 
       // re-ensure on app resume / visibility / user gesture
       try{
