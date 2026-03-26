@@ -1,0 +1,68 @@
+Adaptive Director Phase 1 build
+
+What was added
+- New module: assets/js/52-adaptive-director-domain.js
+- Script load order updated so Adaptive Director loads after boss/spawn domains and before the debug panel.
+- Debug panel now has:
+  - Adaptive Director enable/disable toggle
+  - Adaptive Director section with live style/tags/weights
+  - exported snapshot support for adaptive state
+
+What this build does
+- Observes the player continuously during active gameplay.
+- Builds rolling EMA metrics for:
+  - range preference
+  - left/right dodge after firing
+  - stationary/camping tendency
+  - aggression / rushdown tendency
+  - burst spam
+  - panic dodge under threat
+  - lane repetition
+  - anti-teleport comfort
+  - retreat after threat
+- Converts those metrics into hysteresis-based tags such as:
+  - camping
+  - leftDodger / rightDodger
+  - rangedKiter
+  - rushdown
+  - panicDasher
+  - shotSpammer
+  - teleportWeak / teleportStrong
+  - laneRepeater
+- Computes bounded adaptive weights for future enemy counter-play:
+  - aimLeadBiasX
+  - burstDelayMix
+  - flankTeleportBias
+  - gapCloseBias
+  - crossEvadeBias
+  - fakeoutBias
+  - punishRetreatBias
+- Keeps decayed memory from level to level.
+
+What this build does NOT do yet
+- Enemies do not consume the adaptive weights in combat yet.
+- Boss attack selection is not altered by Adaptive Director yet.
+
+Why this was done first
+- This is the safe integration phase.
+- It lets us validate the player-profile model live before plugging it into enemy decisions.
+- It avoids destabilizing the now-stable combat/spawn/boss flow.
+
+Recommended test
+- Play 2-3 levels with clearly different styles:
+  1. stay far and kite
+  2. rush in aggressively
+  3. fire then dodge left often
+- Open the debug panel and verify that:
+  - style changes
+  - topTags update
+  - weights shift accordingly
+- Export a snapshot after each style and compare them.
+
+Next planned phase
+- Feed Adaptive Director weights into regular enemy decisions first:
+  - aim lead
+  - teleport flank chance
+  - dash/gap-close choice
+  - fakeout / delayed burst timing
+- Then wire the boss to read only the strongest 2 player tags.

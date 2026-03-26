@@ -1,0 +1,14 @@
+Added debug instrumentation build.
+
+Included:
+- assets/js/95-debug-panel.js
+- REGRESSION_CHECKLIST.md
+
+Debug panel:
+- Toggle with F2 or ` key
+- Mobile/desktop button: DBG at screen edge
+- Counters: boot calls, loop starts/stops, spawn requests/held/flushes, boss attacks, transitions, overlay pauses/resumes
+- Live snapshot of critical runtime state
+- Recent event log
+- Persisted regression checklist
+- Copy snapshot button for fast bug reports

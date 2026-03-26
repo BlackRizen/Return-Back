@@ -1,0 +1,18 @@
+Build notes - one-shot kill + active dev skip
+
+Changes in this build
+- Added a debug-panel toggle for One-shot kill.
+- One-shot kill is persisted through localStorage (GAMEPOWER_ONE_SHOT_KILL).
+- Player projectile damage now becomes lethal when One-shot kill is enabled.
+- Kept P active for level skip in this debug build.
+- Added a debug-panel toggle for Level skip (P).
+- Dev skip is enabled by default in this debug build.
+- Dev skip can still be disabled with ?devskip=0, localStorage.GAMEPOWER_DEV_SKIP=0, or the debug panel toggle.
+- Snapshot export now includes devSkipEnabled and oneShotKillEnabled.
+
+Notes
+- These are debug/testing conveniences and are not intended for the final player build.
+- Telekinesis asteroid hits were already lethal; the new one-shot flag mainly affects normal projectile damage and boss damage.
+
+Validation
+- All JS files passed node --check.

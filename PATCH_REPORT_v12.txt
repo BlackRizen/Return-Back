@@ -1,0 +1,42 @@
+Patched build: session ownership stabilization pass
+
+Main additions
+- assets/js/53-session-lifecycle-domain.js
+- CHANGELOG_v12.md
+- updated TOP36_refactored.html
+- updated module-manifest.json
+- updated MODULE_MAP.md
+
+What was changed
+1. Centralized boot ownership
+   - window.boot is wrapped by a single session authority
+   - window.__startGameAfter now routes through GameApp.session.scheduleBootAfter
+
+2. Centralized main loop ownership
+   - GameApp.actions.startMainLoop enforces one active loop
+   - GameApp.actions.stopMainLoop is routed through the same owner
+   - session state tracks start/stop reasons and active run status
+
+3. Retry/restart hardening
+   - GameApp.runtime.resetRunState now stops the loop, clears volatile flags,
+     hides overlays/boss intro UI, purges world entities, and normalizes flow state
+   - retry buttons are rebound to the centralized retry path
+
+4. Boss flow safety
+   - derived boss stages: inactive, intro_pending, intro_playing,
+     intro_complete, combat_pending, spawn_pending, entrance_playing,
+     combat_active, cleanup
+   - level 10 boss attacks are blocked unless stage is combat_active
+
+5. Spawn resume safety
+   - resumeEnemySpawns(delay) uses tracked async timers when runtime tracking is available
+
+Validation performed
+- node --check passed for all JavaScript files in assets/js
+
+What still needs direct runtime playtesting
+- fresh start from menu into level 1
+- retry after death on a non-boss level
+- transition into level 10, boss intro, boss entrance, first boss attack
+- overlay open/close while enemies are queued
+- full refresh and replay stability

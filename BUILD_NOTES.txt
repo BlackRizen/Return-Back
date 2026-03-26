@@ -1,0 +1,24 @@
+Updated build changes (March 20, 2026)
+
+Files modified:
+- assets/js/25-runtime-bridge.js
+- assets/js/40-hud-sync.js
+- assets/js/80-boss-cinematics.js
+- assets/js/50-controls-and-overlays.js
+- assets/js/49-enemy-spawn-domain.js
+- assets/js/43-level-flow-domain.js
+- assets/js/51-boss-attack-domain.js
+- assets/js/60-loader-and-startup.js
+- assets/js/30-state-and-flow.js
+- assets/js/20-gameplay-core.js
+
+Main goals:
+- preserve raw legacy gameplay handlers before later wrappers mutate them
+- make domain modules the final owners of spawn/boss attack flow
+- remove overlay-based spawn function wrapping
+- route level flow directly through the spawn domain
+- reduce multi-entry startup risk
+- consolidate timer logic
+
+Validation performed:
+- JavaScript syntax check with node --check on all modified files

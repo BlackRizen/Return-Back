@@ -1,0 +1,83 @@
+Game patch report v13
+
+Scope of this pass
+- Focused runtime hardening on level 10 boss flow and retry flow.
+- Built on top of the previous lifecycle/session ownership pass.
+
+Confirmed code changes
+
+1) Session epoch and retry authority
+- Added a session/run epoch to assets/js/53-session-lifecycle-domain.js.
+- Epoch now bumps on runtime reset and runtime finalize.
+- Exposed centralized retry through window.retryLevel and GameApp.session.retryLevel.
+- Boss jump-slam now goes through the same stage gate as bossAttackFire.
+- World purge now clears common per-entity timers before removing objects.
+
+2) Level-flow timers moved under runtime tracking
+- Updated assets/js/43-level-flow-domain.js.
+- Added a scheduleTracked helper that:
+  - prefers GameApp.runtime.trackTimeout
+  - tags delayed callbacks to the current session epoch
+- Converted these delayed paths to tracked callbacks:
+  - hideLevelOverlay
+  - scheduleFirstSpawn
+  - standard level start delay
+  - standard first-spawn delay
+
+Why this matters
+- Retry/reset now clears these delayed callbacks through runtime.clearTrackedAsync.
+- If an old callback survives for any reason, epoch mismatch prevents it from re-arming a stale transition/start step.
+
+3) Boss cinematic timers moved under runtime tracking
+- Updated assets/js/80-boss-cinematics.js.
+- Added tracked timer helpers for boss cinematic effects.
+- Converted these delayed paths to tracked callbacks:
+  - boss roar finish
+  - quake unblock
+  - quake ring add/remove
+  - quake placement interval
+  - push-player interval stop
+  - VHS rewind cleanup
+  - VHS rewind next-step callback
+
+Why this matters
+- Old level-10 cinematic timers are less likely to leak across retry/restart and mutate fresh state.
+
+4) VHS retry now calls the centralized retry path
+- Retry rewind effect now prefers:
+  1. GameApp.session.retryLevel()
+  2. window.retryLevel()
+  3. legacy retryLevel()
+- This reduces split ownership between the overlay effect and the actual reset logic.
+
+Validation performed
+- Ran node --check on all JS files in assets/js
+- Result: no syntax errors detected
+
+What this pass is strongest against
+- delayed level-start callbacks firing after retry
+- delayed boss cinematic callbacks mutating fresh sessions
+- split retry ownership between VHS effect and runtime reset
+- direct jump-slam calls bypassing boss-stage gating
+- leftover per-entity timers surviving world purge
+
+What is still not proven here
+- Live browser correctness was not verified in-engine/browser during this pass.
+- The following still need direct runtime playtesting:
+  - die/retry during level 10 intro
+  - die/retry during level 10 entrance roar/quake
+  - die/retry during active level 10 combat
+  - transition into level 10 after several previous retries
+  - standard level retry after recent boss-level play
+
+Suggested verification order
+1. Start from fresh load and reach level 10 normally.
+2. Retry during intro video.
+3. Retry during entrance roar/quake.
+4. Retry after the boss has already fired at least once.
+5. Leave level 10 and retry on a standard level.
+6. Repeat level 10 entry after multiple retries and confirm intro/spawn/first attack each happen once.
+
+Truthfulness note
+- This pass materially reduces the exact stale-timer/retry hazards identified in the analysis.
+- It should be treated as a strong hardening pass, not as a claim of full runtime completion until browser playtests confirm behavior.

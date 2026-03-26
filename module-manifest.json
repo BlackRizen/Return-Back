@@ -1,0 +1,152 @@
+[
+  {
+    "file": "assets/js/00-bootstrap.js",
+    "entry_marker": "\"use strict\";",
+    "description": "",
+    "bytes": 4031
+  },
+  {
+    "file": "assets/js/10-core-foundation.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('10-core-foundation', {\"entryMarker\": \"// --- level-based kill target ---\", \"description\": \"Core helpers, score/level HUD, boss HUD, shared gameplay scaling.\"});",
+    "description": "Core helpers, score/level HUD, boss HUD, shared gameplay scaling.",
+    "bytes": 24558
+  },
+  {
+    "file": "assets/js/20-gameplay-core.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('20-gameplay-core', {\"entryMarker\": \"// === Preload pentru toate sprite-urile juc\\u0103torului (anti-flicker)\", \"description\": \"Gameplay setup, preload logic, timers, combat loop, enemy updates, boss interactions.\"});",
+    "description": "Gameplay setup, preload logic, timers, combat loop, enemy updates, boss interactions.",
+    "bytes": 104192
+  },
+  {
+    "file": "assets/js/25-runtime-bridge.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('25-runtime-bridge', {\"entryMarker\": \"// runtime state bridge\", \"description\": \"Binds legacy globals to GameApp.state and window accessors for safer cross-module state sharing.\"});",
+    "description": "Binds legacy globals to GameApp.state and window accessors for safer cross-module state sharing.",
+    "bytes": 4451
+  },
+  {
+    "file": "assets/js/30-state-and-flow.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('30-state-and-flow', {\"entryMarker\": \"// === fall/crash vars & helpers ===\", \"description\": \"Crash/fall flow, level progression, music switching, overlays, options wiring.\"});",
+    "description": "Crash/fall flow, level progression, music switching, overlays, options wiring.",
+    "bytes": 64820
+  },
+  {
+    "file": "assets/js/35-loop-orchestrator.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('35-loop-orchestrator', {\"entryMarker\": \"// loop orchestrator bridge\", \"description\": \"Routes the main gameplay RAF through GameApp.loop for centralized orchestration and debugging.\"});",
+    "description": "Routes the main gameplay RAF through GameApp.loop for centralized orchestration and debugging.",
+    "bytes": 929
+  },
+  {
+    "file": "assets/js/36-domain-kernel.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('36-domain-kernel', {\"entryMarker\": \"// domain kernel\", \"description\": \"Creates domain registry/helpers used by player/combat/level/boss/audio/ui/pickups/runner modules.\"});",
+    "description": "Creates domain registry/helpers used by player/combat/level/boss/audio/ui/pickups/runner modules.",
+    "bytes": 2689
+  },
+  {
+    "file": "assets/js/40-hud-sync.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('40-hud-sync', {\"entryMarker\": \"// === SOURCE: #TopDigitsUpdater ===\", \"description\": \"HUD digit sync and pre-control bridge utilities.\"});",
+    "description": "HUD digit sync and pre-control bridge utilities.",
+    "bytes": 33825
+  },
+  {
+    "file": "assets/js/41-player-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('41-player-domain', {\"entryMarker\": \"// player domain\", \"description\": \"Player facade: movement, physics, pose sync and safe snapshot helpers.\"});",
+    "description": "Player facade: movement, physics, pose sync and safe snapshot helpers.",
+    "bytes": 1871
+  },
+  {
+    "file": "assets/js/42-combat-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('42-combat-domain', {\"entryMarker\": \"// combat domain\", \"description\": \"Combat facade: projectiles, enemies, hit checks and score-aware firing helpers.\"});",
+    "description": "Combat facade: projectiles, enemies, hit checks and score-aware firing helpers.",
+    "bytes": 1922
+  },
+  {
+    "file": "assets/js/43-level-flow-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('43-level-flow-domain', {\"entryMarker\": \"// level flow domain\", \"description\": \"Level progression domain with extracted transition orchestration, level-10 boss sequencing and watchdog/fallback spawn guard.\"});",
+    "description": "Level progression domain with extracted transition orchestration, level-10 boss sequencing and watchdog/fallback spawn guard.",
+    "bytes": 9873
+  },
+  {
+    "file": "assets/js/44-boss-flow-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('44-boss-flow-domain', {\"entryMarker\": \"// boss flow domain\", \"description\": \"Boss domain with extracted intro orchestration, intro flags and cinematic action wrappers.\"});",
+    "description": "Boss domain with extracted intro orchestration, intro flags and cinematic action wrappers.",
+    "bytes": 5993
+  },
+  {
+    "file": "assets/js/45-audio-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('45-audio-domain', {\"entryMarker\": \"// audio domain\", \"description\": \"Central audio domain with extracted music routing, boss-track transitions, sound bridge cleanup and diagnostics.\"});",
+    "description": "Central audio domain with extracted music routing, boss-track transitions, sound bridge cleanup and diagnostics.",
+    "bytes": 5829
+  },
+  {
+    "file": "assets/js/46-ui-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('46-ui-domain', {\"entryMarker\": \"// ui domain\", \"description\": \"Central UI/HUD facade for badges, boss HUD and overlay refreshes.\"});",
+    "description": "Central UI/HUD facade for badges, boss HUD and overlay refreshes.",
+    "bytes": 1190
+  },
+  {
+    "file": "assets/js/47-pickups-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('47-pickups-domain', {\"entryMarker\": \"// pickups domain\", \"description\": \"Pickup/resource facade for coins, resource stacks and runner fuel helpers.\"});",
+    "description": "Pickup/resource facade for coins, resource stacks and runner fuel helpers.",
+    "bytes": 1207
+  },
+  {
+    "file": "assets/js/48-runner-mode-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('48-runner-mode-domain', {\"entryMarker\": \"// runner mode domain\", \"description\": \"Runner mode facade with start/stop/update helpers and status based on DOM/game flags.\"});",
+    "description": "Runner mode facade with start/stop/update helpers and status based on DOM/game flags.",
+    "bytes": 1850
+  },
+  {
+    "file": "assets/js/49-enemy-spawn-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('49-enemy-spawn-domain', {\"entryMarker\": \"// enemy spawn domain\", \"description\": \"Centralizes enemy spawning and projectile audio policy while preserving legacy gameplay bodies.\"});",
+    "description": "Centralizes enemy spawning and projectile audio policy while preserving legacy gameplay bodies.",
+    "bytes": 5715
+  },
+  {
+    "file": "assets/js/50-controls-and-overlays.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('50-controls-and-overlays', {\"entryMarker\": \"// === SOURCE: #touch-parity-js ===\", \"description\": \"Touch controls, fullscreen-safe helpers, level-choice controls, button interactions.\"});",
+    "description": "Touch controls, fullscreen-safe helpers, level-choice controls, button interactions.",
+    "bytes": 27388
+  },
+  {
+    "file": "assets/js/51-boss-attack-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('51-boss-attack-domain', {\"entryMarker\": \"// boss attack domain\", \"description\": \"Owns the final level-10 boss attack policy and removes duplicate selector patches from scattered legacy files.\"});",
+    "description": "Owns the final level-10 boss attack policy and removes duplicate selector patches from scattered legacy files.",
+    "bytes": 5305
+  },
+  {
+    "file": "assets/js/60-loader-and-startup.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('60-loader-and-startup', {\"entryMarker\": \"// === SOURCE: #LoaderJS ===\", \"description\": \"Loader, tap-to-start, startup sequencing, audio warmup, loading bar bindings.\"});",
+    "description": "Loader, tap-to-start, startup sequencing, audio warmup, loading bar bindings.",
+    "bytes": 25183
+  },
+  {
+    "file": "assets/js/70-ui-patches.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('70-ui-patches', {\"entryMarker\": \"// === Synced Repair FX overlay (starts with Repair; stops exactly when repair anim ends) ===\", \"description\": \"Repair FX sync, anti-focus guards, no-flicker overlay init, loading bar polish, wave patch.\"});",
+    "description": "Repair FX sync, anti-focus guards, no-flicker overlay init, loading bar polish, wave patch.",
+    "bytes": 23674
+  },
+  {
+    "file": "assets/js/80-boss-cinematics.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('80-boss-cinematics', {\"entryMarker\": \"// === SOURCE: #BossL10DelayedIntro ===\", \"description\": \"Boss intro gating, cinematics, fullscreen persistence, attack probability overrides, VHS rewind.\"});",
+    "description": "Boss intro gating, cinematics, fullscreen persistence, attack probability overrides, VHS rewind.",
+    "bytes": 19105
+  },
+  {
+    "file": "assets/js/90-shop-and-abilities.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('90-shop-and-abilities', {\"entryMarker\": \"// === SOURCE: #ChoiceOverlayHudMirror ===\", \"description\": \"Choice overlay HUD mirror, shop rules, invisibility systems, cooldown UI, runner mode.\"});",
+    "description": "Choice overlay HUD mirror, shop rules, invisibility systems, cooldown UI, runner mode.",
+    "bytes": 60972
+  },
+  {
+    "file": "assets/js/52-adaptive-director-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('52-adaptive-director-domain', {\"entryMarker\":\"// adaptive director domain\",\"description\":\"Observes player habits, builds rolling pattern tags and publishes bounded adaptive weights for future enemy counter-behavior.\"});",
+    "description": "Observes player habits, builds rolling pattern tags and publishes bounded adaptive weights for future enemy counter-behavior.",
+    "bytes": 22956
+  },
+  {
+    "file": "assets/js/53-session-lifecycle-domain.js",
+    "entry_marker": "window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule('53-session-lifecycle-domain', {\"entryMarker\": \"// session lifecycle domain\", \"description\": \"Final authority for boot scheduling, loop ownership, retry cleanup and normalized boss/session state.\"});",
+    "description": "Final authority for boot scheduling, loop ownership, retry cleanup and normalized boss/session state.",
+    "bytes": 24379
+  }
+]

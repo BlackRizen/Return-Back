@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html lang="ro">
+<head>
+<meta charset="utf-8"/>
+<title>
+   Endless Sky — 60s · 10 Kills
+  </title>
+<!-- Google Fonts: Archivo Black -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;display=swap" rel="stylesheet"/>
+<!-- Loading style patch (Archivo Black — BIG & EXTRA THICK) -->
+<!-- Loading text removed -->
+<!-- Force LOADING fill to yellow -->
+<meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<!-- Injected: Invisibility cooldown HUD styles -->
+<!-- Injected: Invisibility cooldown HUD styles v2 (2x size, yellow on active) -->
+<link href="./assets/css/main.css" rel="stylesheet"/>
+
+&lt;!-- Refactored build: styles and scripts extracted into maintainable modules. --&gt;
+</head>
+<body>
+<div id="loaderScreen">
+<div class="loaderContent">
+<div class="loaderText">
+     Tap the screen to start
+    </div>
+</div>
+</div>
+<div aria-hidden="true" id="bossHud">
+<div class="track">
+</div>
+<div class="fill" id="bossHpFill">
+</div>
+<img alt="Boss Health Frame" id="bossHealthFrame" src="bosshealth.png"/>
+<div class="label" id="bossHpLabel">
+    BOSS 100%
+   </div>
+</div>
+<!-- Top PNG container for Level & Score -->
+<div class="hud-dock-top" id="hudDockTop">
+<div class="hud-top-nudge">
+<div class="hud-top-scale">
+<div aria-hidden="false" class="lvlscore-hud hud-in-dock" id="lvlScoreHud">
+<img alt="Level &amp; Score frame" class="frame" src="levelscore.webp"/>
+<div class="slots">
+<div class="text level" id="lvlText">
+        LEVEL
+        <span class="digits" id="lvlDigits">
+         1
+        </span>
+</div>
+<div class="text score" id="scoreText">
+        SCORE:
+        <span class="digits" id="scoreDigits">
+         0
+        </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="level-badge" id="levelBadgeTop">
+   LEVEL 1
+  </div>
+<div class="score-badge" id="scoreBadgeTop">
+   Score: 0
+  </div>
+<!-- START screen -->
+<div class="start-screen" id="startScreen">
+<!-- Monster fix: ancorat de marginea DREAPTĂ a ecranului, scalat cu --uiScale -->
+<div aria-hidden="true" class="start-decor-fixed">
+<img alt="Monster" id="decorMonsterFixed" src="monster.webp"/>
+</div>
+<img alt="Game Intro" class="bg" src="start_logo.webp"/>
+<div class="design">
+<!-- Elemente decorative pe start screen (scalate cu canvasul 1920×1080) -->
+<div aria-hidden="true" class="start-decor">
+<div id="earthWrapper">
+<img alt="Earth" id="decorEarth" src="earth.webp"/>
+</div>
+<div id="shipWrapper">
+<img alt="Ship" id="decorShip" src="ship.png"/>
+</div>
+<img alt="Logo" id="decorLogo" src="logo.webp"/>
+</div>
+<div class="ui">
+<button aria-label="Start" class="menu-btn" id="startBtn">
+</button>
+<button aria-label="Options" class="menu-btn" id="optionsBtn">
+</button>
+<button aria-label="Exit" class="menu-btn" id="exitBtn">
+</button>
+</div>
+</div>
+</div>
+<!-- OPTIONS overlay -->
+<div aria-hidden="true" class="options-panel" id="optionsPanel">
+<div class="options-card">
+<h3>
+     Options
+    </h3>
+<p style="opacity:.85;margin:0 0 12px 0;">
+     Sunet, dificultate, fullscreen
+    </p>
+<div class="opt-row">
+<label for="musicVol" style="flex:1; text-align:left;">
+      Music
+     </label>
+<input id="musicVol" max="1" min="0" step="0.01" type="range" value="0.35"/>
+</div>
+<div class="opt-row">
+<label for="sfxVol" style="flex:1; text-align:left;">
+      SFX
+     </label>
+<input id="sfxVol" max="1" min="0" step="0.01" type="range" value="0.85"/>
+</div>
+<label class="opt-row" style="justify-content:flex-start; gap:10px;">
+<input id="muteAll" type="checkbox"/>
+     Mute all
+    </label>
+<div class="opt-row">
+<label for="difficulty" style="flex:1; text-align:left;">
+      Dificultate
+     </label>
+<select id="difficulty">
+<option value="easy">
+       Easy
+      </option>
+<option selected="" value="normal">
+       Normal
+      </option>
+<option value="hard">
+       Hard
+      </option>
+</select>
+</div>
+<button class="options-close" id="fullscreenToggle" style="background:#3b82f6;color:#021;">
+     Toggle Fullscreen
+    </button>
+<button class="options-close" id="optionsClose">
+     Close
+    </button>
+</div>
+</div>
+<!-- Fade & FX overlays -->
+<div class="fade-overlay" id="fade">
+</div>
+<div class="flicker-overlay" id="redFlicker">
+</div>
+<div class="alert-overlay" id="holdAlerts">
+<img alt="Alert" id="alertImg" src=""/>
+</div>
+<!-- Background -->
+<div aria-hidden="true" class="sky">
+</div>
+<div aria-hidden="true" class="sky sky2">
+</div>
+<!-- Mothership -->
+<div aria-hidden="true" class="mothership" id="mothership" style="--shipY:5vh; --fxScale:1.25">
+<div class="ship-land-fx" id="shipLandFx">
+<img alt="" id="shipLandFxImg" src="ship_land_fx_1.webp"/>
+</div>
+<div class="ship-hold-fx" id="shipHoldFx">
+<img alt="" id="shipHoldFxImg" src=""/>
+</div>
+<img alt="Spaceship" id="shipImg" src="spaceship.webp"/>
+</div>
+<!-- Clouds: back & front layers -->
+<div aria-hidden="true" class="cloud-layer back" id="cloudLayerBack">
+</div>
+<div aria-hidden="true" class="cloud-layer front" id="cloudLayerFront">
+</div>
+<!-- Player -->
+<div class="player" id="player" style="--pw:220px; --px:120px; --py:0px; --imgDY:0px;">
+<img alt="Alien" id="playerImg" src="alien_idle_right_1.png"/>
+</div>
+<!-- Game layers -->
+<div aria-hidden="true" class="enemies" id="enemies">
+</div>
+<div aria-hidden="true" class="projectiles" id="projectiles">
+</div>
+<div aria-hidden="true" class="enemyProjectiles" id="enemyProjectiles">
+</div>
+<div aria-hidden="true" class="coins" id="coins">
+</div>
+<div aria-hidden="true" class="particles" id="particles">
+</div>
+<!-- === HUD DOCK-uri === -->
+<!-- Stânga: Health + Objective (legate, scalate împreună) -->
+<div class="hud-dock-left" id="hudDockLeft">
+<!-- Health -->
+<div class="hud hud-in-dock">
+<div class="hpbar">
+<div class="hp-slot">
+<div class="hp" id="hp">
+</div>
+<div class="hp-text" id="hpText">
+       100%
+      </div>
+</div>
+</div>
+<img alt="Healthbar Frame" class="hud-frame" src="healthbar.png"/>
+</div>
+<!-- Objective -->
+<div class="objective obj-in-dock" id="objective">
+<div class="obj-slots" id="objSlots">
+</div>
+<div class="kills-on-objective" id="kills">
+     0 / 10
+    </div>
+<img alt="Objective" class="bg" src="objective.png"/>
+</div>
+</div>
+<!-- Dreapta: Timer -->
+<div class="hud-dock-right" id="hudDockRight">
+<div class="timerHud timer-in-dock">
+<img alt="Timer Frame" class="timer-frame" src="timer.webp"/>
+<div id="timer">
+     60
+    </div>
+</div>
+</div>
+<!-- === Bottom dock: Resurse (my_overlay + 0 ×) === -->
+<div class="hud-dock-bottom" id="hudDockBottom">
+<div class="hud-bottom-nudge">
+<!-- deplasare în px, independentă de scale -->
+<div class="hud-bottom-scale">
+<!-- scala globală × locală -->
+<div class="resourcesHud">
+<img alt="Resources Frame" class="frame" src="my_overlay.webp"/>
+<div class="slots">
+<div class="res" data-type="scrap">
+<span class="count" id="resScrap">
+         0
+        </span>
+<span class="mul">
+         ×
+        </span>
+</div>
+<div class="res" data-type="wood">
+<span class="count" id="resWood">
+         0
+        </span>
+<span class="mul">
+         ×
+        </span>
+</div>
+<div class="res" data-type="circuits">
+<span class="count" id="resCircuits">
+         0
+        </span>
+<span class="mul">
+         ×
+        </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Overlays -->
+<div class="overlay" id="overlay">
+<div class="ovbox">
+<span id="overlayTitle">
+     You Died!
+    </span>
+<div class="ovsub" id="youDiedStats">
+</div>
+<img alt="Retry?" id="retryImg" src="retry.png"/>
+<div class="btnrow" id="retryBtns" style="display:flex; gap:12px; justify-content:center; margin-top:16px;">
+<button aria-label="Yes" class="btn" id="retryYes">
+</button>
+<button aria-label="No" class="btn" id="retryNo">
+</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="win">
+<div class="ovbox">
+    You Win!
+    <div class="ovsub" id="winStats">
+</div>
+<button class="btn" id="restart2">
+     Restart (R)
+    </button>
+</div>
+</div>
+<!-- Pause overlay -->
+<div class="overlay" id="pause">
+<div class="ovbox">
+    Paused
+    <div style="margin-top:12px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+<button aria-label="Resume" class="menu-btn" id="pauseResumeBtn">
+</button>
+<button aria-label="Options" class="menu-btn" id="pauseOptionsBtn">
+</button>
+<button aria-label="Exit" class="menu-btn" id="pauseExitBtn">
+</button>
+</div>
+</div>
+</div>
+<!-- LEVEL CHOICE overlay (independent, above pause) -->
+<div aria-hidden="true" class="overlay" id="levelChoice">
+<img alt="" class="choice-bg" src="BOARDSHOP3.png"/>
+<span class="choice-res-count" id="choiceResScrap">
+    0
+   </span>
+<span class="choice-res-count" id="choiceResWood">
+    0
+   </span>
+<span class="choice-res-count" id="choiceResCircuits">
+    0
+   </span>
+<div class="choice-row">
+<div class="choice-col">
+<button aria-label="Power Up" class="choice-btn" data-choice="powerup">
+<img alt="" src="powerup.webp"/>
+</button>
+</div>
+<div class="choice-col">
+<button aria-label="Health" class="choice-btn" data-choice="health">
+<img alt="" src="health.webp"/>
+</button>
+</div>
+<div class="choice-col">
+<button aria-label="Repair" class="choice-btn" data-choice="repair">
+<img alt="" src="repair.webp"/>
+</button>
+</div>
+</div>
+</div>
+<div class="overlay" id="levelOverlay">
+<div class="ovbox">
+<span id="levelTitle">
+     LEVEL 2
+    </span>
+<div class="ovsub" id="levelSub">
+</div>
+</div>
+</div>
+<!-- Touch controls -->
+<div aria-hidden="true" class="touch" id="touch">
+<button aria-label="Left" class="tbtn" id="btnLeft">
+    ◀
+   </button>
+<button aria-label="Right" class="tbtn" id="btnRight">
+    ▶
+   </button>
+<button aria-label="Jump" class="tbtn tbig" id="btnJump">
+    ⤴
+   </button>
+<button aria-label="Fire" class="tbtn tbig" id="btnFire">
+    ●
+   </button>
+</div>
+<!-- Mandatory gate: portrait-only + fullscreen required -->
+<div id="orientationBlocker" style="position:fixed; inset:0; background:#000; display:none; z-index:20000;">
+</div>
+<!-- BEGIN DEV-SKIP: Hold P ≈ 600ms to skip level -->
+<!-- END DEV-SKIP -->
+<div aria-hidden="true" id="clawOverlay">
+<img alt="claw" src="claw.webp"/>
+</div>
+<div aria-hidden="true" id="biteFlash">
+</div>
+<!-- BOSS L10 ADD-ON v3: 2 waves (left/right) at 2× size, stomp ring 2×, strong quake; menu-safe -->
+<!-- SFX overlay sounds -->
+<!--
+  MUSCA13 – TOUCH PARITY SHIM (versiune simplificată)
+  ✅ Stânga jos: 2 săgeți (Left / Right)
+  ✅ Dreapta jos: 2 butoane mici (Jump / Fire)
+-->
+<!-- JOYSTICK LR ONLY START -->
+<div aria-label="Joystick stânga-dreapta" id="joystickContainer" role="application">
+<div id="joystick">
+</div>
+</div>
+<!-- JOYSTICK LR ONLY END -->
+<!-- Crouch touch button fallback injection -->
+<!-- override crouch position -->
+<!-- Touch buttons final override -->
+<!-- Adjust spacing between Fire, Crouch, and Jump buttons -->
+<!-- Center Jump and Crouch relative to Fire button -->
+<!-- Center Jump and Crouch relative to Fire button, with small spacing -->
+<!-- Show touch buttons only during gameplay -->
+<!-- Toggle touch buttons visibility based on gameplay state -->
+<!-- Hide joystick on start screen; show only while playing -->
+<!-- Make HUD text bold -->
+<!-- Enlarge health bar text -->
+<!-- Further enlarge health bar text -->
+<!-- Enlarge health bar text more on mobile -->
+<button id="nextLevelBtn">
+</button>
+<div aria-hidden="true" class="LOADING-overlay" id="loadingOverlay">
+<div class="LOADING-stack">
+<div class="LOADING-title outside">
+<span id="loadingPct">
+      0%
+     </span>
+</div>
+<div class="LOADING-card">
+<div class="LOADING-bar">
+<div class="LOADING-fill" id="loadingFill" style="width:0%">
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- === WebAudio gapless + Capacitor BackButton (consolidated) === -->
+<!-- === Minimal Haptics (hits-only) === -->
+<!-- === SFX WebAudio Patch (healthup/powerup/repair only) === -->
+<!-- === SFX WebAudio Patch (robust: plays to end) === -->
+<!-- BEGIN Intro Video Overlay Injection -->
+<div aria-label="Intro video" id="IntroOverlayX">
+<video id="IntroVideoX" playsinline="" preload="auto">
+<source src="intro.mp4" type="video/mp4"/>
+</video>
+<audio id="IntroAudioX" preload="auto">
+<source src="intro.mp3" type="audio/mpeg"/>
+</audio>
+<button aria-label="Skip" id="IntroSkipX" title="Skip">
+<img alt="Skip" src="skip_button.png"/>
+</button>
+<button id="IntroSoundBtnX">
+    Enable sound
+   </button>
+<button id="IntroPlayBtnX">
+    Play intro
+   </button>
+</div>
+<!-- END Intro Video Overlay Injection -->
+<!-- === BOSS INTRO VIDEO OVERLAY (Level 10 gate) === -->
+<!-- Fullscreen patch for Boss Intro video -->
+<div aria-label="Boss intro" id="BossIntroOv">
+<div aria-hidden="true" id="BossIntroBg">
+</div>
+<video id="BossIntroVid" playsinline="" preload="auto" src="introboss.mp4" webkit-playsinline="">
+</video>
+<button aria-label="Skip boss intro" id="BossIntroSkip" type="button">
+<img alt="Skip" id="BossIntroSkipImg" src="skip_button.png"/>
+</button>
+</div>
+<!-- === /BOSS INTRO VIDEO OVERLAY === -->
+<!-- === WING FLAP AUDIO HOOK === -->
+<!-- === /WING FLAP AUDIO HOOK === -->
+<!-- Fullscreen API helper (persistent) for Boss Intro overlay -->
+<!-- wait.mp3 guard: only play if an enemy exists in the level -->
+<!-- Injected: Invisibility cooldown HUD -->
+<div aria-label="Invisibility cooldown" class="ready" id="invisCooldown" title="Invisibility cooldown">
+<svg height="100" id="invisCooldownSVG" viewbox="0 0 44 44" width="100">
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="coolArcGrad" x1="0" x2="44" y1="0" y2="0">
+<stop offset="0%" stop-color="#9FD6FF">
+</stop>
+<stop offset="60%" stop-color="#3FA9FF">
+</stop>
+<stop offset="100%" stop-color="#1E7FE5">
+</stop>
+</lineargradient>
+<lineargradient gradientunits="userSpaceOnUse" id="hotArcGrad" x1="0" x2="44" y1="0" y2="0">
+<stop offset="0%" stop-color="#FFE777">
+</stop>
+<stop offset="55%" stop-color="#FFD400">
+</stop>
+<stop offset="100%" stop-color="#FFB100">
+</stop>
+</lineargradient>
+</defs>
+<circle class="track" cx="22" cy="22" fill="none" r="20" stroke-width="3">
+</circle>
+<circle fill="none" id="invisCooldownOutline" opacity="0.55" stroke="rgba(0,0,0,0.45)" stroke-linecap="round" stroke-width="3.6">
+</circle>
+<circle class="arc" cx="22" cy="22" fill="none" id="invisCooldownArc" r="20" stroke-dasharray="125.66" stroke-dashoffset="125.66" stroke-linecap="round" stroke-width="3" transform="rotate(-90 22 22)">
+</circle>
+</svg>
+<img alt="Invisibility icon" id="invisCooldownImg" src="inv1.png"/>
+<img alt="Locked ability tab" id="invisAbilityTab" src="locked.png"/>
+</div>
+<!-- Injected: Invisibility cooldown logic -->
+<!-- Injected: Invisibility cooldown logic v2 -->
+<!-- Injected: Invisibility cooldown logic v3 (unfill on invis start) -->
+<script src="./assets/js/00-bootstrap.js"></script><script src="./assets/js/10-core-foundation.js"></script><script src="./assets/js/20-gameplay-core.js"></script><script src="./assets/js/25-runtime-bridge.js"></script><script src="./assets/js/30-state-and-flow.js"></script><script src="./assets/js/35-loop-orchestrator.js"></script><script src="./assets/js/40-hud-sync.js"></script><script src="./assets/js/50-controls-and-overlays.js"></script><script src="./assets/js/60-loader-and-startup.js"></script><script src="./assets/js/70-ui-patches.js"></script><script src="./assets/js/80-boss-cinematics.js"></script><script src="./assets/js/90-shop-and-abilities.js"></script><script src="./assets/js/36-domain-kernel.js"></script><script src="./assets/js/41-player-domain.js"></script><script src="./assets/js/42-combat-domain.js"></script><script src="./assets/js/43-level-flow-domain.js"></script><script src="./assets/js/44-boss-flow-domain.js"></script><script src="./assets/js/45-audio-domain.js"></script><script src="./assets/js/46-ui-domain.js"></script><script src="./assets/js/47-pickups-domain.js"></script><script src="./assets/js/48-runner-mode-domain.js"></script><script src="./assets/js/49-enemy-spawn-domain.js"></script><script src="./assets/js/51-boss-attack-domain.js"></script><script src="./assets/js/52-adaptive-director-domain.js"></script>
+<script src="./assets/js/53-session-lifecycle-domain.js"></script>
+<script src="./assets/js/95-debug-panel.js"></script>
+</body>
+</html>
