@@ -7,8 +7,10 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
   var startScreen = document.querySelector('.start-screen');
 
   const qs = new URLSearchParams(window.location.search || '');
+  const AUTO_START = qs.get('autostart') === '1';
   const FROM_LAUNCHER = qs.get('launcher') === '1';
 
+  window.__AUTO_START = AUTO_START;
   window.__FROM_LAUNCHER = FROM_LAUNCHER;
   window.__SKIP_GAME_FULLSCREEN = FROM_LAUNCHER;
 
@@ -44,9 +46,7 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     if(ev.key === 'Enter' || ev.key === ' '){ onTap(); }
   }
 
-  // If launched from the website launcher, the real launcher overlay in index.html handles startup.
-  // So we hide the old tap gate immediately.
-  function bypassOldLoaderForLauncher(){
+  function autoBypassLoader(){
     resumeAudio();
     try{
       loader.classList.add('fade-out');
@@ -58,8 +58,8 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
   }
 
   window.addEventListener('load', function(){
-    if (FROM_LAUNCHER) {
-      bypassOldLoaderForLauncher();
+    if (AUTO_START && FROM_LAUNCHER) {
+      autoBypassLoader();
       return;
     }
 
@@ -77,20 +77,26 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
   const startBtn = document.getElementById('startBtn');
   const startScreen = document.getElementById('startScreen');
 
+  const qs = new URLSearchParams(window.location.search || '');
+  const AUTO_START = qs.get('autostart') === '1';
+  const FROM_LAUNCHER = qs.get('launcher') === '1';
+
   function show(ms){
     if (!overlay || overlay.classList.contains('visible')) return;
     if (!fill || !pct) return;
 
-    fill.style.transition='none';
-    fill.style.width='0%';
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
 
-    overlay.style.display='flex';
+    overlay.style.display = 'flex';
     overlay.classList.add('show','visible');
 
     try{
       if(startScreen){
-        startScreen.style.visibility='hidden';
-        startScreen.style.display='none';
+        startScreen.style.visibility = 'hidden';
+        startScreen.style.display = 'none';
+        startScreen.style.opacity = '0';
+        startScreen.style.pointerEvents = 'none';
       }
     }catch(_){}
 
@@ -98,7 +104,7 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
 
     requestAnimationFrame(()=>{
       fill.style.transition = 'width '+ms+'ms linear';
-      fill.style.width='100%';
+      fill.style.width = '100%';
     });
 
     const t0 = performance.now();
@@ -119,6 +125,15 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
 
   window.__showLoadingOverlay = show;
 
+  if (AUTO_START && FROM_LAUNCHER){
+    window.addEventListener('load', function(){
+      setTimeout(function(){
+        show(3000);
+      }, 30);
+    }, { once:true });
+    return;
+  }
+
   if (startBtn){
     const onDown = ()=> show(3000);
     startBtn.addEventListener('pointerdown', onDown, { once:true, capture:true });
@@ -128,6 +143,10 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
 
 // === Robust starter: schedule the real game start once ===
 (function(){
+  const qs = new URLSearchParams(window.location.search || '');
+  const AUTO_START = qs.get('autostart') === '1';
+  const FROM_LAUNCHER = qs.get('launcher') === '1';
+
   let scheduled = false, timer = null, started = false;
 
   function forceResizeBursts(){
@@ -135,6 +154,14 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     setTimeout(()=>{ try{ window.dispatchEvent(new Event('resize')); }catch(_){} }, 120);
     setTimeout(()=>{ try{ window.dispatchEvent(new Event('resize')); }catch(_){} }, 450);
     setTimeout(()=>{ try{ window.dispatchEvent(new Event('resize')); }catch(_){} }, 1000);
+  }
+
+  function resumeAudio(){
+    try{
+      if(typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended'){
+        Howler.ctx.resume();
+      }
+    }catch(_){}
   }
 
   function tryStart(){
@@ -147,6 +174,8 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
 
     if (started) return;
     started = true;
+
+    resumeAudio();
 
     try{
       if (typeof window.boot === 'function') {
@@ -172,6 +201,14 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     timer = setTimeout(tryStart, ms|0);
   };
 
+  if (AUTO_START && FROM_LAUNCHER){
+    window.addEventListener('load', function(){
+      window.__showLoadingOverlay && window.__showLoadingOverlay(3000);
+      window.__startGameAfter(3000);
+    }, { once:true });
+    return;
+  }
+
   try{
     const btn = document.getElementById('startBtn');
     if (btn){
@@ -193,14 +230,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const exitBtn = document.getElementById("exitButton");
 
   const qs = new URLSearchParams(window.location.search || '');
+  const AUTO_START = qs.get('autostart') === '1';
   const FROM_LAUNCHER = qs.get('launcher') === '1';
 
   [startBtn, optionsBtn, exitBtn].forEach(btn => {
     if (btn) btn.setAttribute("disabled", "true");
   });
 
-  // The new in-page launcher handles the first click.
-  if (FROM_LAUNCHER){
+  if (AUTO_START && FROM_LAUNCHER){
     setTimeout(() => {
       [startBtn, optionsBtn, exitBtn].forEach(btn => {
         if (btn) btn.removeAttribute("disabled");
@@ -240,8 +277,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   try { buttons.forEach(b => { b.removeAttribute("disabled"); b.blur(); }); } catch(_) {}
 
-  try { if (fadeOv){ fadeOv.classList.add("hide"); fadeOv.style.display = "none"; } } catch(_) {}
-  try { if (loader){ loader.style.display = "none"; } } catch(_) {}
+  try { if (fadeOv){ fadeOv.classList.add("hide"); fadeOv.style.display = "none"; fadeOv.style.pointerEvents = "none"; } } catch(_) {}
+  try { if (loader){ loader.style.display = "none"; loader.style.pointerEvents = "none"; } } catch(_) {}
 
   try { document.dispatchEvent(new CustomEvent("firstTapSimulated")); } catch(_) {}
 });
@@ -283,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (state.current === which && ((which==='menu' && state.menuNode) || (which==='game' && state.gameNode))) {
         return;
       }
-
       stopNode(state.menuNode); state.menuNode=null;
       stopNode(state.gameNode); state.gameNode=null;
 
@@ -294,7 +330,6 @@ document.addEventListener("DOMContentLoaded", () => {
       node.loopEnd   = node.buffer.duration;
       node.connect(which==='menu'?menuGain:gameGain);
       node.start(ctx.currentTime + 0.03);
-
       if (which==='menu') state.menuNode = node; else state.gameNode = node;
       state.current = which;
     }
@@ -332,7 +367,6 @@ document.addEventListener("DOMContentLoaded", () => {
         try{ muteHtmlAudio(); ensurePlayback(); startTrack('menu'); }
         catch(_){ _smm && _smm(); }
       };
-
       window.startMusic = function(){
         try{ muteHtmlAudio(); ensurePlayback(); startTrack('game'); }
         catch(_){ _sm && _sm(); }
@@ -451,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const src = (audio && audio.src || '').toLowerCase();
         if (src.endsWith('healthup.mp3')) { SFX.play('healthup'); return; }
         if (src.endsWith('powerup.mp3')) { SFX.play('powerup'); return; }
-        if (src.endsWith('repair.mp3'))  { SFX.play('repair'); return; }
+        if (src.endsWith('repair.mp3'))   { SFX.play('repair');   return; }
       }catch(_){}
       if (_playSound) return _playSound(audio);
       try{ audio && audio.play && audio.play(); }catch(_){}
@@ -478,17 +512,15 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     ['pointerdown','touchstart','mousedown','keydown'].forEach(ev=>{ window.addEventListener(ev,()=>{ SFX.init(); SFX.resume(); }, {once:true, passive:true}); });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) SFX.resume(); });
-    try{
-      var App=(window.Capacitor && (window.Capacitor.App || (window.Capacitor.Plugins && window.Capacitor.Plugins.App)))||null;
-      App&&App.addListener&&App.addListener('appStateChange', st=>{ if(st&&st.isActive) SFX.resume(); });
-    }catch(_){}
+    try{ var App=(window.Capacitor && (window.Capacitor.App || (window.Capacitor.Plugins && window.Capacitor.Plugins.App)))||null;
+         App&&App.addListener&&App.addListener('appStateChange', st=>{ if(st&&st.isActive) SFX.resume(); }); }catch(_){}
     const _playSound = window.playSound;
     window.playSound = function(audio){
       try{
         const src=(audio&&audio.src||'').toLowerCase();
         if(src.endsWith('healthup.mp3')){ SFX.play('healthup'); return; }
         if(src.endsWith('powerup.mp3')){ SFX.play('powerup'); return; }
-        if(src.endsWith('repair.mp3'))  { SFX.play('repair'); return; }
+        if(src.endsWith('repair.mp3'))  { SFX.play('repair');   return; }
       }catch(_){}
       if(_playSound) return _playSound(audio);
       try{ audio&&audio.play&&audio.play(); }catch(_){}
@@ -522,10 +554,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!segEls) return;
     segEls.forEach(s => s.className = 'seg');
     if (level <= 0) return;
-
     const colors = ['red','orange','yellow','green'];
     const color  = colors[Math.min(level - 1, colors.length - 1)];
-
     for (let i = 0; i < level; i++) {
       segEls[i].classList.add('filled', color);
     }
@@ -602,6 +632,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 /* --- end Repair fill bar --- */
 
+// Repair->barfill binding + departure trigger (robust fallback)
 (function(){
   function hideRepairButton(){
     const btns = Array.from(document.querySelectorAll('button, [role="button"], .btn'));
@@ -622,6 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 })();
 
+/* Bind Repair fill only when overlay appears, and only to its actual button */
 (function(){
   const OVERLAY_SEL = '#levelOverlay';
   const REPAIR_BTN_SEL = 'button.choice-btn[data-choice="repair"]';
@@ -674,6 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setTimeout(()=> obs.disconnect(), 20000);
 })();
 
+// Fallback: in case playRepair() isn't found here, listen for a custom event
 window.addEventListener('repairAnimationFinished', ()=>{
   try {
     if (window.__shipDownFillBar) {
