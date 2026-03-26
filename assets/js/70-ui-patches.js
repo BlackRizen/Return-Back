@@ -349,6 +349,14 @@ document.addEventListener("DOMContentLoaded", () => {
     try{ if (window.Sounds && Sounds.startBgm){ Sounds.startBgm.pause(); Sounds.startBgm.currentTime = 0; } }catch(_){}
   }
 
+  function notifyIntroStarted(){
+    try{
+      if (window.parent && window.parent !== window){
+        window.parent.postMessage({ type:'intro-started' }, '*');
+      }
+    }catch(_){}
+  }
+
   function startSync(){
     if (syncTimer) return;
     syncTimer = setInterval(function(){
@@ -416,6 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Keep audio locked to video lifecycle
     video.addEventListener('play', function(){
       stopMenuBridge();
+      notifyIntroStarted();
       audioWanted = true;
       try{ audio.currentTime = video.currentTime; }catch(_){}
       const pa = audio.play();
