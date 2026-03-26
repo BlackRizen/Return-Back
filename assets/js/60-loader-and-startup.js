@@ -106,97 +106,6 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     scheduled = true;
     timer = setTimeout(tryStart, ms|0);
   };
-  function resumeUnlockedAudio(){
-    try{
-      if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended'){
-        Howler.ctx.resume();
-      }
-    }catch(_){}
-    try{
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (AC && AC.prototype && AC.prototype.resume) {
-        // no direct instance handle here; this path is best-effort only
-      }
-    }catch(_){}
-  }
-
-  function openStartMenu(){
-    try{
-      var loader = document.getElementById('loaderScreen');
-      if (loader){
-        loader.classList.add('fade-out');
-        loader.style.display = 'none';
-        loader.style.opacity = '0';
-        loader.style.pointerEvents = 'none';
-      }
-    }catch(_){}
-    try{
-      var fadeOv = document.querySelector('.fade-overlay');
-      if (fadeOv){
-        fadeOv.classList.add('hide');
-        fadeOv.style.display = 'none';
-        fadeOv.style.opacity = '0';
-        fadeOv.style.pointerEvents = 'none';
-      }
-    }catch(_){}
-    try{
-      var loadingOv = document.getElementById('loadingOverlay');
-      if (loadingOv){
-        loadingOv.classList.remove('visible');
-        loadingOv.classList.remove('show');
-        loadingOv.style.display = 'none';
-        loadingOv.style.opacity = '0';
-        loadingOv.style.pointerEvents = 'none';
-      }
-    }catch(_){}
-    try{
-      var startScreen = document.getElementById('startScreen') || document.querySelector('.start-screen');
-      if (startScreen){
-        startScreen.style.visibility = 'visible';
-        startScreen.style.display = 'flex';
-        startScreen.style.opacity = '1';
-        startScreen.style.pointerEvents = 'auto';
-      }
-    }catch(_){}
-    try{
-      ['startBtn','optionsBtn','exitBtn'].forEach(function(id){
-        var btn = document.getElementById(id);
-        if (btn){
-          btn.removeAttribute('disabled');
-          btn.disabled = false;
-        }
-      });
-    }catch(_){}
-    try{ window.dispatchEvent(new CustomEvent('gameUserStarted')); }catch(_){}
-    try{ window.dispatchEvent(new CustomEvent('gameStartMenuOpened')); }catch(_){}
-    return true;
-  }
-
-  function playStartMenuSound(){
-    resumeUnlockedAudio();
-    try{
-      if (typeof window.startMenuMusic === 'function') return !!window.startMenuMusic();
-      if (window.GameApp && window.GameApp.domains && window.GameApp.domains.audio && typeof window.GameApp.domains.audio.startMenuMusic === 'function'){
-        return !!window.GameApp.domains.audio.startMenuMusic();
-      }
-    }catch(_){}
-    try{
-      if (window.Sounds && Sounds.startBgm){
-        Sounds.startBgm.currentTime = Sounds.startBgm.currentTime || 0;
-        Sounds.startBgm.play().catch(function(){});
-        return true;
-      }
-    }catch(_){}
-    return false;
-  }
-
-  window.gameApi = window.gameApi || {};
-  window.gameApi.openStartMenu = openStartMenu;
-  window.gameApi.playStartMenuSound = playStartMenuSound;
-  window.gameApi.openStartMenuAndPlaySound = function(){
-    openStartMenu();
-    return playStartMenuSound();
-  };
   // Also schedule on earliest gesture so hiding the button doesn't kill the click
   try{
     const btn = document.getElementById('startBtn');
@@ -285,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = new AC({ latencyHint: 'playback' });
     const mast = ctx.createGain(); mast.connect(ctx.destination);
 
-    const menuGain = ctx.createGain(); menuGain.gain.value = (window.Sounds?.startBgm?.volume ?? 0.9); menuGain.connect(mast);
+    const menuGain = ctx.createGain(); menuGain.gain.value = 0; menuGain.connect(mast);
     const gameGain = ctx.createGain(); gameGain.gain.value = (window.Sounds?.bgm?.volume ?? 0.35);  gameGain.connect(mast);
 
     const state = { current:'none', menuNode:null, gameNode:null, buffers:{menu:null, game:null} };
@@ -330,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }catch(_){}
     }
 
-    Promise.all([fetchDecode('gamemusic.wav'), fetchDecode('music.wav')]).then(([mb, gb])=>{
+    Promise.all([fetchDecode('gamemusic.wav').catch(function(){ return null; }), fetchDecode('music.wav')]).then(([mb, gb])=>{
       state.buffers.menu = mb;
       state.buffers.game = gb;
 
@@ -349,12 +258,78 @@ document.addEventListener("DOMContentLoaded", () => {
       const _sm  = window.startMusic;
 
       window.startMenuMusic = function(){
-        try{ muteHtmlAudio(); ensurePlayback(); startTrack('menu'); }
-        catch(_){ _smm && _smm(); }
+        try{
+          muteHtmlAudio();
+          ensurePlayback();
+          startTrack('menu');
+          return true;
+        }
+        catch(_){ return _smm ? _smm() : false; }
       };
       window.startMusic = function(){
-        try{ muteHtmlAudio(); ensurePlayback(); startTrack('game'); }
-        catch(_){ _sm && _sm(); }
+        try{ muteHtmlAudio(); ensurePlayback(); startTrack('game'); return true; }
+        catch(_){ return _sm ? _sm() : false; }
+      };
+
+      window.stopMenuMusic = function(){
+        try{
+          if (window.Sounds && Sounds.startBgm){ Sounds.startBgm.pause(); Sounds.startBgm.currentTime = 0; }
+        }catch(_){}
+        try{ stopNode(state.menuNode); state.menuNode = null; }catch(_){}
+        try{ if (state.current === 'menu') state.current = 'none'; }catch(_){}
+        return true;
+      };
+
+      function revealStartMenu(){
+        try{
+          if (ctx.state === 'suspended') ctx.resume();
+        }catch(_){}
+        try{
+          if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended'){
+            Howler.ctx.resume();
+          }
+        }catch(_){}
+        try{
+          var loader = document.getElementById('loaderScreen');
+          if (loader){
+            loader.classList.add('fade-out');
+            loader.style.opacity = '0';
+            loader.style.pointerEvents = 'none';
+            loader.style.display = 'none';
+          }
+        }catch(_){}
+        try{
+          var startScreen = document.getElementById('startScreen') || document.querySelector('.start-screen');
+          if (startScreen){
+            startScreen.style.visibility = 'visible';
+            startScreen.style.display = 'flex';
+            startScreen.style.opacity = '1';
+            startScreen.style.pointerEvents = 'auto';
+          }
+        }catch(_){}
+        try{ window.dispatchEvent(new CustomEvent('gameUserStarted')); }catch(_){}
+        return true;
+      }
+
+      window.gameApi = window.gameApi || {};
+      window.gameApi.openStartMenu = function(){
+        return revealStartMenu();
+      };
+      window.gameApi.playStartMenuSound = function(){
+        try{
+          if (ctx.state === 'suspended') ctx.resume();
+        }catch(_){}
+        try{
+          if (typeof window.startMenuMusic === 'function') return !!window.startMenuMusic();
+        }catch(_){}
+        return false;
+      };
+      window.gameApi.openStartMenuAndPlaySound = function(){
+        try{ revealStartMenu(); }catch(_){}
+        try{
+          if (typeof window.startMenuMusic === 'function') return !!window.startMenuMusic();
+        }catch(_){}
+        return false;
       };
 
       // re-ensure on app resume / visibility / user gesture

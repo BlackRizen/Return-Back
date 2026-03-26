@@ -205,14 +205,23 @@ document.addEventListener("DOMContentLoaded", () => {
     init();
   }
 })();
-/* === injected: start-menu music lifecycle wiring (no fullscreen dependency) === */
+/* === injected: fullscreen menu music wiring === */
 (function(){
-  function __playMenuBgm(){ try{ startMenuMusic(); }catch(_){ } }
+  function __playMenuBgmIfFS(){ try{ startMenuMusic(); }catch(_){ } }
   function __pauseMenuBgm(){ try{ if (window.Sounds && Sounds.startBgm && Sounds.startBgm.pause) Sounds.startBgm.pause(); }catch(_){ } }
 
-  try{
-    window.addEventListener('gameStartMenuOpened', __playMenuBgm, { passive:true });
-  }catch(_){}
+  function __isFS(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || document.mozFullScreenElement);
+  }
+
+  // Start or stop based on fullscreen state
+  function __fsHandler(){
+    if (__isFS()) __playMenuBgmIfFS(); else __pauseMenuBgm();
+  }
+  document.addEventListener('fullscreenchange', __fsHandler);
+  document.addEventListener('webkitfullscreenchange', __fsHandler);
+  document.addEventListener('msfullscreenchange', __fsHandler);
+  document.addEventListener('mozfullscreenchange', __fsHandler);
 
   // Pause AFTER loading overlay completes or when real game begins.
   (function hookLoading(){
@@ -335,6 +344,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Keep audio synced to video when allowed
   let audioWanted = false;
   let syncTimer = null;
+  function stopMenuBridge(){
+    try{ if (window.stopMenuMusic) window.stopMenuMusic(); }catch(_){}
+    try{ if (window.Sounds && Sounds.startBgm){ Sounds.startBgm.pause(); Sounds.startBgm.currentTime = 0; } }catch(_){}
+  }
+
   function startSync(){
     if (syncTimer) return;
     syncTimer = setInterval(function(){
@@ -355,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function finishIntro(cb){
     stopSync();
+    stopMenuBridge();
     try{ video.pause(); }catch(_){}
     try{ audio.pause(); audio.currentTime = 0; }catch(_){}
     overlay.style.display = 'none';
@@ -400,6 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Keep audio locked to video lifecycle
     video.addEventListener('play', function(){
+      stopMenuBridge();
       audioWanted = true;
       try{ audio.currentTime = video.currentTime; }catch(_){}
       const pa = audio.play();

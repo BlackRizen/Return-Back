@@ -271,7 +271,7 @@ Sounds.inv.volume = 0.9;
 Sounds.wait.volume = 0.8;
 Sounds.enemyDie.volume = 0.9;
 ;
-    Sounds.startBgm.loop = true; Sounds.startBgm.volume = 0.9;
+    Sounds.startBgm.loop = true; Sounds.startBgm.volume = 0.9; Sounds.startBgm.preload = 'auto';
     Sounds.bgm.loop = true;      Sounds.bgm.volume = 0.35;
 Sounds.bossEntrance.loop = true; Sounds.bossEntrance.volume = 1.0;
     Sounds.jump.volume = 0.6; Sounds.land.volume = 0.45;
@@ -370,17 +370,26 @@ Sounds.bossEntrance.loop = true; Sounds.bossEntrance.volume = 1.0;
     function startMusic(){ Sounds.bgm.currentTime=0; Sounds.bgm.play().catch(()=>{}); }
     function startMenuMusic(){
   try{
-    if (!Sounds || !Sounds.startBgm) return false;
-    if (Sounds.startBgm.paused) {
-      Sounds.startBgm.currentTime = Sounds.startBgm.currentTime || 0;
-      Sounds.startBgm.play().catch(()=>{});
+    if (Sounds.startBgm){
+      Sounds.startBgm.pause();
+      Sounds.startBgm.currentTime = 0;
+      const p = Sounds.startBgm.play();
+      if (p && typeof p.catch === 'function') p.catch(()=>{});
+      return true;
     }
-    return true;
-  }catch(_){ return false; }
+  }catch(_){}
+  return false;
 }
-    ['pointerdown','keydown','touchstart'].forEach(ev=>{
-      window.addEventListener(ev, ()=>{ if(document.getElementById('startScreen').style.display!=='none') startMenuMusic(); }, { once:true })
-    });
+function stopMenuMusic(){
+  try{
+    if (Sounds.startBgm){
+      Sounds.startBgm.pause();
+      Sounds.startBgm.currentTime = 0;
+    }
+  }catch(_){}
+  return true;
+}
+window.stopMenuMusic = stopMenuMusic;
 
     /* ===== Dificultate ===== */
 
