@@ -377,12 +377,14 @@ var overlay = document.createElement('img');
 
   function requestFsOnRoot(){
     try{
+      if (window.__DIRECT_START_PATCH__ || window.__SKIP_GAME_FULLSCREEN) return false;
       var el = pickFsTarget();
       var doc = document;
-      if (!el) return;
-      if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement || doc.mozFullScreenElement) return;
-      (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || el.mozRequestFullScreen)?.call(el);
+      if (!el) return false;
+      if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement || doc.mozFullScreenElement) return true;
+      return (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || el.mozRequestFullScreen)?.call(el);
     }catch(_){}
+    return false;
   }
 
   function wireAfterShow(){

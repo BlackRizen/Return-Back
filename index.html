@@ -486,349 +486,101 @@
 <script src="./assets/js/53-session-lifecycle-domain.js"></script>
 <script>
 (function () {
-  const qs = new URLSearchParams(window.location.search || '');
-  const FROM_LAUNCHER = qs.get('launcher') === '1';
-  if (!FROM_LAUNCHER) return;
+  window.__DIRECT_START_PATCH__ = true;
+  window.__AUTO_START = true;
+  window.__FROM_LAUNCHER = true;
+  window.__SKIP_GAME_FULLSCREEN = true;
 
-  const style = document.createElement('style');
-  style.textContent = `
-    #websiteLaunchOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999999;
-      background: #000;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      font-family: Inter, Arial, sans-serif;
-    }
-    #websiteLaunchOverlay .launch-inner {
-      position: relative;
-      z-index: 2;
-      width: min(92vw, 900px);
-      text-align: center;
-      padding: 32px;
-    }
-    #websiteLaunchOverlay .grid {
-      position: absolute;
-      inset: 0;
-      opacity: 0.06;
-      background-image:
-        linear-gradient(rgba(0,212,255,0.24) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,212,255,0.24) 1px, transparent 1px);
-      background-size: 42px 42px;
-      pointer-events: none;
-    }
-    #websiteLaunchOverlay .glow1,
-    #websiteLaunchOverlay .glow2,
-    #websiteLaunchOverlay .glow3 {
-      position: absolute;
-      border-radius: 9999px;
-      filter: blur(70px);
-      pointer-events: none;
-    }
-    #websiteLaunchOverlay .glow1 {
-      top: 18%;
-      left: 12%;
-      width: 180px;
-      height: 180px;
-      background: rgba(0,212,255,0.12);
-    }
-    #websiteLaunchOverlay .glow2 {
-      right: 14%;
-      bottom: 16%;
-      width: 220px;
-      height: 220px;
-      background: rgba(255,215,0,0.08);
-    }
-    #websiteLaunchOverlay .glow3 {
-      top: 28%;
-      right: 20%;
-      width: 140px;
-      height: 140px;
-      background: rgba(0,212,255,0.10);
-    }
-    #websiteLaunchOverlay .eyebrow {
-      color: #FFD700;
-      font-size: 12px;
-      letter-spacing: 0.35em;
-      margin-bottom: 14px;
-      text-transform: uppercase;
-    }
-    #websiteLaunchOverlay .title {
-      font-size: clamp(34px, 7vw, 84px);
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      color: #00D4FF;
-      margin-bottom: 18px;
-      text-transform: uppercase;
-      text-shadow:
-        0 0 12px rgba(0,212,255,0.24),
-        0 0 28px rgba(0,212,255,0.12);
-    }
-    #websiteLaunchOverlay .subtitle {
-      max-width: 760px;
-      margin: 0 auto 30px;
-      color: rgba(255,255,255,0.72);
-      line-height: 1.6;
-      font-size: 15px;
-    }
-    #websiteLaunchOverlay .start-btn {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 290px;
-      padding: 16px 28px;
-      border-radius: 22px;
-      border: 1px solid rgba(0,212,255,0.45);
-      background: rgba(0,0,0,0.6);
-      color: #00D4FF;
-      font-weight: 800;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      cursor: pointer;
-      box-shadow:
-        0 0 30px rgba(0,212,255,0.18),
-        inset 0 0 20px rgba(0,212,255,0.06);
-      transition: transform 0.25s ease;
-    }
-    #websiteLaunchOverlay .start-btn:hover {
-      transform: scale(1.03);
-    }
-    #websiteLaunchOverlay .hint {
-      margin-top: 14px;
-      color: rgba(255,255,255,0.45);
-      font-size: 12px;
-      letter-spacing: 0.1em;
-    }
-    #websiteLaunchOverlay .loading-wrap {
-      width: min(520px, 86vw);
-      margin: 0 auto;
-      display: none;
-    }
-    #websiteLaunchOverlay.loading .loading-wrap {
-      display: block;
-    }
-    #websiteLaunchOverlay.loading .intro-wrap {
-      display: none;
-    }
-    #websiteLaunchOverlay .loading-title {
-      color: #00D4FF;
-      font-size: clamp(22px, 4vw, 42px);
-      font-weight: 800;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      margin-bottom: 18px;
-      animation: launchTextGlitch 0.14s infinite alternate;
-    }
-    #websiteLaunchOverlay .bar {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      overflow: hidden;
-      border: 1px solid rgba(0,212,255,0.30);
-      background: rgba(255,255,255,0.05);
-    }
-    #websiteLaunchOverlay .bar-fill {
-      width: 0%;
-      height: 100%;
-      border-radius: 999px;
-      background: linear-gradient(
-        90deg,
-        rgba(0,212,255,0.35) 0%,
-        rgba(0,212,255,0.95) 55%,
-        rgba(255,255,255,1) 100%
-      );
-      box-shadow:
-        0 0 20px rgba(0,212,255,0.45),
-        0 0 40px rgba(0,212,255,0.2);
-      transition: width 0.03s linear;
-    }
-    #websiteLaunchOverlay .pct {
-      margin-top: 14px;
-      color: rgba(255,255,255,0.55);
-      font-size: 12px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-    #websiteLaunchOverlay.glitch-out {
-      animation: launchGlitchOut 0.7s ease forwards;
-      pointer-events: none;
-    }
-    @keyframes launchGlitchOut {
-      0% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0px);
-        clip-path: inset(0 0 0 0);
-      }
-      18% {
-        transform: translateX(6px) skewX(2deg);
-        filter: blur(1px);
-      }
-      38% {
-        transform: translateX(-10px) skewX(-3deg);
-        filter: blur(3px);
-        clip-path: inset(4% 0 7% 0);
-      }
-      62% {
-        opacity: 0.75;
-        transform: translateX(12px);
-        filter: blur(6px);
-        clip-path: inset(14% 0 18% 0);
-      }
-      100% {
-        opacity: 0;
-        transform: translateY(-10px) scale(1.02);
-        filter: blur(12px);
-        clip-path: inset(100% 0 0 0);
-        visibility: hidden;
-      }
-    }
-    @keyframes launchTextGlitch {
-      0% {
-        transform: translateX(-1px);
-        text-shadow:
-          2px 0 rgba(0,212,255,0.85),
-          -2px 0 rgba(255,0,140,0.35);
-      }
-      100% {
-        transform: translateX(1px);
-        text-shadow:
-          -2px 0 rgba(0,212,255,0.85),
-          2px 0 rgba(255,0,140,0.35);
-      }
-    }
-  `;
-  document.head.appendChild(style);
+  function resolvedFs() { return Promise.resolve(false); }
 
-  const overlay = document.createElement('div');
-  overlay.id = 'websiteLaunchOverlay';
-  overlay.innerHTML = `
-    <div class="grid"></div>
-    <div class="glow1"></div>
-    <div class="glow2"></div>
-    <div class="glow3"></div>
+  try {
+    const elementProtos = [
+      window.Element && Element.prototype,
+      window.HTMLElement && HTMLElement.prototype
+    ].filter(Boolean);
 
-    <div class="launch-inner">
-      <div class="intro-wrap">
-        <div class="eyebrow">TRANSMISSION READY</div>
-        <div class="title">RETURN BACK</div>
-        <div class="subtitle">
-          Start the mission, initialize fullscreen, and deploy the game sequence.
-        </div>
-        <button class="start-btn" id="websiteLaunchStartBtn">Start your journey</button>
-        <div class="hint">Click here to initialize the game</div>
-      </div>
+    ['requestFullscreen', 'webkitRequestFullscreen', 'mozRequestFullScreen', 'msRequestFullscreen'].forEach((name) => {
+      elementProtos.forEach((proto) => {
+        try {
+          Object.defineProperty(proto, name, {
+            configurable: true,
+            writable: true,
+            value: resolvedFs
+          });
+        } catch (_) {}
+      });
+    });
 
-      <div class="loading-wrap">
-        <div class="loading-title">Initializing mission</div>
-        <div class="bar">
-          <div class="bar-fill" id="websiteLaunchBarFill"></div>
-        </div>
-        <div class="pct" id="websiteLaunchPct">0%</div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+    const docProto = window.Document && Document.prototype;
+    ['exitFullscreen', 'webkitExitFullscreen', 'mozCancelFullScreen', 'msExitFullscreen'].forEach((name) => {
+      if (!docProto) return;
+      try {
+        Object.defineProperty(docProto, name, {
+          configurable: true,
+          writable: true,
+          value: resolvedFs
+        });
+      } catch (_) {}
+    });
+  } catch (_) {}
 
-  function resumeAudio() {
+  function hideNode(node) {
+    if (!node) return;
     try {
-      if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
-        Howler.ctx.resume();
-      }
+      node.style.display = 'none';
+      node.style.visibility = 'hidden';
+      node.style.opacity = '0';
+      node.style.pointerEvents = 'none';
     } catch (_) {}
   }
 
-  function doResizeBursts() {
+  function removeNode(node) {
+    if (!node) return;
+    hideNode(node);
+    try { node.remove(); } catch (_) {}
+  }
+
+  function stripStartupUi() {
+    hideNode(document.getElementById('loaderScreen'));
+    hideNode(document.getElementById('startScreen'));
+    hideNode(document.getElementById('loadingOverlay'));
+    hideNode(document.getElementById('orientationBlocker'));
+    hideNode(document.getElementById('clawOverlay'));
+    hideNode(document.getElementById('IntroOverlayX'));
+    hideNode(document.getElementById('BossIntroVideoOverlay'));
+    document.querySelectorAll('.fade-overlay, #websiteLaunchOverlay').forEach(removeNode);
+  }
+
+  function finalizeView() {
+    try {
+      if (typeof showTouch === 'function') showTouch();
+      else document.body.classList.add('playing');
+    } catch (_) {
+      try { document.body.classList.add('playing'); } catch (__){}
+    }
+
     try { window.dispatchEvent(new Event('resize')); } catch (_) {}
     setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch (_) {} }, 120);
     setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch (_) {} }, 450);
-    setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch (_) {} }, 1000);
   }
 
-  function safeFullscreen() {
-    const el = document.documentElement;
-    if (!el || !el.requestFullscreen) return Promise.resolve(false);
-    return el.requestFullscreen().then(() => true).catch(() => false);
+  function startDirect() {
+    stripStartupUi();
+
+    if (typeof window.boot === 'function') {
+      try { window.boot(); } catch (_) {}
+    }
+
+    finalizeView();
   }
 
-  function startGameNow() {
-    try {
-      window.__SKIP_GAME_FULLSCREEN = true;
-      resumeAudio();
-
-      const loader = document.getElementById('loaderScreen');
-      if (loader) {
-        loader.style.display = 'none';
-        loader.style.opacity = '0';
-        loader.style.pointerEvents = 'none';
-      }
-
-      const fadeOv = document.querySelector('.fade-overlay');
-      if (fadeOv) {
-        fadeOv.style.display = 'none';
-        fadeOv.style.opacity = '0';
-        fadeOv.style.pointerEvents = 'none';
-      }
-
-      const startScreen = document.getElementById('startScreen');
-      if (startScreen) {
-        startScreen.style.display = 'none';
-        startScreen.style.visibility = 'hidden';
-        startScreen.style.opacity = '0';
-        startScreen.style.pointerEvents = 'none';
-      }
-
-      if (typeof window.boot === 'function') {
-        window.boot();
-      }
-
-      try {
-        if (typeof showTouch === 'function') showTouch();
-        else document.body.classList.add('playing');
-      } catch (_) {
-        try { document.body.classList.add('playing'); } catch (__){}
-      }
-
-      doResizeBursts();
-    } catch (_) {}
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startDirect, { once: true });
+  } else {
+    startDirect();
   }
 
-  const startBtn = document.getElementById('websiteLaunchStartBtn');
-  const fill = document.getElementById('websiteLaunchBarFill');
-  const pct = document.getElementById('websiteLaunchPct');
-
-  startBtn.addEventListener('click', async function () {
-    await safeFullscreen();
-    overlay.classList.add('loading');
-
-    startGameNow();
-
-    const duration = 3000;
-    const stepMs = 30;
-    const totalSteps = duration / stepMs;
-    let currentStep = 0;
-
-    const t = setInterval(() => {
-      currentStep += 1;
-      const progress = Math.min((currentStep / totalSteps) * 100, 100);
-      fill.style.width = progress + '%';
-      pct.textContent = Math.round(progress) + '%';
-
-      if (currentStep >= totalSteps) {
-        clearInterval(t);
-        overlay.classList.add('glitch-out');
-        setTimeout(() => {
-          overlay.remove();
-          doResizeBursts();
-        }, 720);
-      }
-    }, stepMs);
-  }, { once: true });
+  window.addEventListener('load', startDirect, { once: true });
 })();
 </script>
 </body>

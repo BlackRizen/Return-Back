@@ -1062,9 +1062,18 @@ function telekKillEnemy(e){
       startMusic();
 
       const fade = document.getElementById('fade');
-      fade.style.display = 'block';
-      requestAnimationFrame(()=> fade.classList.add('hide'));
-      setTimeout(()=>{ try{fade.remove();}catch{}; }, 3000);
+      if (!window.__DIRECT_START_PATCH__ && fade){
+        fade.style.display = 'block';
+        requestAnimationFrame(()=> fade.classList.add('hide'));
+        setTimeout(()=>{ try{fade.remove();}catch{}; }, 3000);
+      } else if (fade) {
+        try{
+          fade.classList.add('hide');
+          fade.style.display = 'none';
+          fade.style.opacity = '0';
+          fade.style.pointerEvents = 'none';
+        }catch(_){}
+      }
 
       init();
       setTimeout(()=>{ introStarted = true; beginIntro(); }, 500);
@@ -1119,6 +1128,10 @@ function telekKillEnemy(e){
 
     if(fsBtn) fsBtn.addEventListener('click', async ()=>{
       try{
+        if (window.__DIRECT_START_PATCH__) {
+          if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+          return;
+        }
         if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
         else await document.exitFullscreen();
       }catch{}
