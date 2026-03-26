@@ -361,71 +361,10 @@ var overlay = document.createElement('img');
 
 // === SOURCE: #BossIntroFullscreenJS_PERSIST ===
 (function(){
-  if (window.__bossIntroFullscreenInstalledV2) return; 
+  if (window.__bossIntroFullscreenInstalledV2) return;
   window.__bossIntroFullscreenInstalledV2 = true;
-
-  function pickFsTarget(){
-    // Prefer the app root so fullscreen persists after overlay hides
-    return (
-      document.getElementById('GameRoot') ||
-      document.getElementById('AppRoot') ||
-      document.getElementById('App') ||
-      document.getElementById('root') ||
-      document.documentElement
-    );
-  }
-
-  function requestFsOnRoot(){
-    try{
-      if (window.__DIRECT_START_PATCH__ || window.__SKIP_GAME_FULLSCREEN) return false;
-      var el = pickFsTarget();
-      var doc = document;
-      if (!el) return false;
-      if (doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement || doc.mozFullScreenElement) return true;
-      return (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen || el.mozRequestFullScreen)?.call(el);
-    }catch(_){}
-    return false;
-  }
-
-  function wireAfterShow(){
-    // Enter fullscreen on the app root and DO NOT auto-exit.
-    try{
-      requestFsOnRoot();
-      // No 'ended' or 'skip' listeners. No MutationObserver exit.
-    }catch(_){}
-  }
-
-  // Hook showBossIntro to ensure we try after it displays
-  var orig = window.showBossIntro;
-  if (typeof orig === 'function'){
-    window.showBossIntro = function(cb){
-      try{ orig(cb); }finally{ try{ wireAfterShow(); }catch(_){ } }
-    };
-  } else {
-    // If showBossIntro isn't ready yet, hook later
-    document.addEventListener('DOMContentLoaded', function(){ 
-      try{
-        if (typeof window.showBossIntro === 'function'){
-          var o = window.showBossIntro;
-          window.showBossIntro = function(cb){
-            try{ o(cb); }finally{ try{ wireAfterShow(); }catch(_){ } }
-          };
-        } else {
-          // Fallback: try once on first user interaction to satisfy gesture requirements
-          var once = function(){
-            try{ wireAfterShow(); }finally{
-              window.removeEventListener('click', once);
-              window.removeEventListener('keydown', once);
-              window.removeEventListener('touchstart', once);
-            }
-          };
-          window.addEventListener('click', once, { once:true });
-          window.addEventListener('keydown', once, { once:true });
-          window.addEventListener('touchstart', once, { once:true });
-        }
-      }catch(_){}
-    });
-  }
+  // Manual-start / no-forced-fullscreen variant:
+  // boss intro no longer requests fullscreen automatically.
 })();
 
 // === SOURCE: #BossAttackProbOverride35 ===

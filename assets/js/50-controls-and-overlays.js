@@ -96,46 +96,10 @@ btn.addEventListener('touchend',   upFn,   {passive:false});
   window.addEventListener('blur', releaseAll);
   document.addEventListener('visibilitychange', ()=>{ if(document.hidden) releaseAll(); });
 })();
-// === Safe Fullscreen Patch (applied on *fixed* variant) ===
+// === Safe Fullscreen Patch (manual-start variant: no forced fullscreen) ===
 (function(){
-  const doc = document;
-  let fsArmed = false;
-  let fsTarget = null;
-
-  async function tryFullscreen(el){
-    if (!el) el = doc.documentElement;
-    if (doc.fullscreenElement) return true;
-    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-    if (!fn) return false;
-    try { await fn.call(el); return true; } catch(e){ return false; }
-  }
-
-  function armFullscreen(el){
-    fsArmed = true;
-    fsTarget = el || doc.documentElement;
-  }
-
-  function onUserGesture(){
-    if (!fsArmed) return;
-    fsArmed = false;
-    tryFullscreen(fsTarget);
-  }
-
-  ['pointerdown','click','touchend','keydown'].forEach(t => {
-    doc.addEventListener(t, onUserGesture, {capture:true});
-  });
-
-  const originalEnsure = window.ensureFullscreen;
-  window.ensureFullscreen = function(el){
-    tryFullscreen(el).then(ok => { if (!ok) armFullscreen(el); });
-  };
-
-  // Optional helper if your code calls "nudge" from loops
-  window.nudgeFullscreen = function(el){
-    if (doc.fullscreenElement) return;
-    armFullscreen(el);
-  };
-
+  window.ensureFullscreen = function(){ return Promise.resolve(false); };
+  window.nudgeFullscreen = function(){ return false; };
   window.__fsPatchApplied = true;
 })();
 /* === JOYSTICK BRIDGE v2 — binds to old touch Left/Right and A/D ===================== */

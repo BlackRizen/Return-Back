@@ -1062,18 +1062,9 @@ function telekKillEnemy(e){
       startMusic();
 
       const fade = document.getElementById('fade');
-      if (!window.__DIRECT_START_PATCH__ && fade){
-        fade.style.display = 'block';
-        requestAnimationFrame(()=> fade.classList.add('hide'));
-        setTimeout(()=>{ try{fade.remove();}catch{}; }, 3000);
-      } else if (fade) {
-        try{
-          fade.classList.add('hide');
-          fade.style.display = 'none';
-          fade.style.opacity = '0';
-          fade.style.pointerEvents = 'none';
-        }catch(_){}
-      }
+      fade.style.display = 'block';
+      requestAnimationFrame(()=> fade.classList.add('hide'));
+      setTimeout(()=>{ try{fade.remove();}catch{}; }, 3000);
 
       init();
       setTimeout(()=>{ introStarted = true; beginIntro(); }, 500);
@@ -1128,10 +1119,6 @@ function telekKillEnemy(e){
 
     if(fsBtn) fsBtn.addEventListener('click', async ()=>{
       try{
-        if (window.__DIRECT_START_PATCH__) {
-          if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
-          return;
-        }
         if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
         else await document.exitFullscreen();
       }catch{}
@@ -1178,70 +1165,23 @@ window.__startGameAfter && window.__startGameAfter(3000);
     };
   
 
-/* === Auto-fullscreen + Portrait-only (desktop + Android) === */
+/* === Auto-fullscreen disabled for manual-start variant === */
 (function(){
   const blocker = document.getElementById('orientationBlocker');
   const startScreen = document.getElementById('startScreen');
-
-  function isFullscreen(){
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
-  function isPortrait(){
-    return window.innerHeight >= window.innerWidth;
-  }
-
-  async function ensureFullscreen(){
-    try{
-      if (!isFullscreen()){
-        const el = document.documentElement;
-        if (el.requestFullscreen) await el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-      }
-    }catch(_){}
-  }
-
-  async function lockPortrait(){
-    try{
-      if (screen.orientation && screen.orientation.lock){
-        await screen.orientation.lock('portrait-primary').catch(()=>screen.orientation.lock('portrait'));
-      }
-    }catch(_){}
-  }
-
+  function ensureFullscreen(){ return Promise.resolve(false); }
+  async function lockPortrait(){ return false; }
   function enforceGate(){
-    const ok = isFullscreen() && isPortrait();
-    if (blocker) blocker.style.display = ok ? 'none' : 'block';
-    if (startScreen) startScreen.style.pointerEvents = ok ? 'auto' : 'none';
+    if (blocker) blocker.style.display = 'none';
+    if (startScreen) startScreen.style.pointerEvents = 'auto';
   }
-
-  // Try to satisfy both requirements on the earliest gestures
-  const nudge = async () => {
-    if (!isFullscreen()) await ensureFullscreen();
-    await lockPortrait();  // harmless on desktop; required on Android
-    enforceGate();
-  };
-
-  ['pointerdown','touchstart','keydown','click'].forEach(ev => {
-    window.addEventListener(ev, nudge, { passive:true });
-  });
-
-  // Hook Start button specifically
-  try{
-    document.getElementById('startBtn')?.addEventListener('click', nudge);
-  }catch(_){}
-
-  // Keep enforcing on changes
-  window.addEventListener('resize', enforceGate);
-  window.addEventListener('orientationchange', enforceGate);
-  document.addEventListener('fullscreenchange', enforceGate);
-  document.addEventListener('webkitfullscreenchange', enforceGate);
-  window.addEventListener('load', enforceGate);
-
-  // Export helpers if needed elsewhere
   window.ensureFullscreen = ensureFullscreen;
   window.lockPortrait = lockPortrait;
   window.enforceGate = enforceGate;
+  if (document.readyState === 'loading') window.addEventListener('load', enforceGate, { once:true });
+  else enforceGate();
 })();
+
 
 /* === ESC / Back -> Pause (still portrait+fullscreen gated) === */
 (function(){
@@ -1294,66 +1234,23 @@ window.__startGameAfter && window.__startGameAfter(3000);
   });
 })();
 
-/* === Auto-fullscreen + Landscape-only (desktop + Android) === */
+/* === Auto-fullscreen disabled for manual-start variant === */
 (function(){
   const blocker = document.getElementById('orientationBlocker');
   const startScreen = document.getElementById('startScreen');
-
-  function isFullscreen(){
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
-  function isLandscape(){
-    return window.innerWidth > window.innerHeight;
-  }
-
-  async function ensureFullscreen(){
-    try{
-      if (!isFullscreen()){
-        const el = document.documentElement;
-        if (el.requestFullscreen) await el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-      }
-    }catch(_){}
-  }
-
-  async function lockLandscape(){
-    try{
-      if (screen.orientation && screen.orientation.lock){
-        await screen.orientation.lock('landscape-primary').catch(()=>screen.orientation.lock('landscape'));
-      }
-    }catch(_){}
-  }
-
+  function ensureFullscreen(){ return Promise.resolve(false); }
+  async function lockLandscape(){ return false; }
   function enforceGate(){
-    const ok = isLandscape();
-    if (blocker) blocker.style.display = ok ? 'none' : 'block';
-    if (startScreen) startScreen.style.pointerEvents = ok ? 'auto' : 'none';
+    if (blocker) blocker.style.display = 'none';
+    if (startScreen) startScreen.style.pointerEvents = 'auto';
   }
-
-  const nudge = async () => {
-    if (!isFullscreen()) await ensureFullscreen();
-    await lockLandscape();
-    enforceGate();
-  };
-
-  ['pointerdown','touchstart','keydown','click'].forEach(ev => {
-    window.addEventListener(ev, nudge, { passive:true });
-  });
-
-  try{
-    document.getElementById('startBtn')?.addEventListener('click', nudge);
-  }catch(_){}
-
-  window.addEventListener('resize', enforceGate);
-  window.addEventListener('orientationchange', enforceGate);
-  document.addEventListener('fullscreenchange', enforceGate);
-  document.addEventListener('webkitfullscreenchange', enforceGate);
-  window.addEventListener('load', enforceGate);
-
   window.ensureFullscreen = ensureFullscreen;
   window.lockLandscape = lockLandscape;
   window.enforceGate = enforceGate;
+  if (document.readyState === 'loading') window.addEventListener('load', enforceGate, { once:true });
+  else enforceGate();
 })();
+
 
 /* === ESC / Back -> Pause (landscape+fullscreen enforced) === */
 (function(){
@@ -1375,68 +1272,23 @@ window.__startGameAfter && window.__startGameAfter(3000);
   });
 })();
 
-/* === Auto-Fullscreen + Landscape-only gate (no prompts) === */
+/* === Auto-fullscreen disabled for manual-start variant === */
 (function(){
   const blocker = document.getElementById('orientationBlocker');
   const startScreen = document.getElementById('startScreen');
-
-  function isFullscreen(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-  function isLandscape(){ return window.innerWidth > window.innerHeight; }
-
-  async function ensureFullscreen(){
-    try{
-      if (!isFullscreen()){
-        const el = document.documentElement;
-        if (el.requestFullscreen)      { await el.requestFullscreen(); }
-        else if (el.webkitRequestFullscreen) { await el.webkitRequestFullscreen(); }
-      }
-    }catch(_){}
-  }
-
-  async function lockLandscape(){
-    try{
-      if (screen.orientation && screen.orientation.lock){
-        await screen.orientation.lock('landscape-primary').catch(()=>screen.orientation.lock('landscape'));
-      }
-    }catch(_){}
-  }
-
+  function ensureFullscreen(){ return Promise.resolve(false); }
+  async function lockLandscape(){ return false; }
   function enforceGate(){
-    const ok = isLandscape() && isFullscreen();
-    if (blocker) blocker.style.display = ok ? 'none' : 'block';
-    if (startScreen) startScreen.style.pointerEvents = ok ? 'auto' : 'none';
+    if (blocker) blocker.style.display = 'none';
+    if (startScreen) startScreen.style.pointerEvents = 'auto';
   }
-
-  // Silent attempt to satisfy requirements
-  const nudge = async () => {
-    if (!isFullscreen()) await ensureFullscreen();
-    await lockLandscape();
-    enforceGate();
-  };
-
-  // Wire to earliest gestures (no UI prompts)
-  ['pointerdown','touchstart','keydown','click'].forEach(ev => {
-    window.addEventListener(ev, nudge, { passive:true });
-  });
-  // Hook Start specifically
-  try{ document.getElementById('startBtn')?.addEventListener('click', nudge); }catch(_){}
-
-  // Re-assert on focus / visibility (common after user dismisses FS)
-  window.addEventListener('focus', enforceGate);
-  document.addEventListener('visibilitychange', enforceGate);
-
-  // Keep checking on resize/orientation/fullscreen changes
-  window.addEventListener('resize', enforceGate);
-  window.addEventListener('orientationchange', enforceGate);
-  document.addEventListener('fullscreenchange', enforceGate);
-  document.addEventListener('webkitfullscreenchange', enforceGate);
-  window.addEventListener('load', enforceGate);
-
-  // Expose helpers
   window.ensureFullscreen = ensureFullscreen;
   window.lockLandscape = lockLandscape;
   window.enforceGate = enforceGate;
+  if (document.readyState === 'loading') window.addEventListener('load', enforceGate, { once:true });
+  else enforceGate();
 })();
+
 
 /* === ESC pauses; overlay gates if fullscreen is lost === */
 (function(){
