@@ -205,23 +205,14 @@ document.addEventListener("DOMContentLoaded", () => {
     init();
   }
 })();
-/* === injected: fullscreen menu music wiring === */
+/* === injected: start-menu music lifecycle wiring (no fullscreen dependency) === */
 (function(){
-  function __playMenuBgmIfFS(){ try{ startMenuMusic(); }catch(_){ } }
+  function __playMenuBgm(){ try{ startMenuMusic(); }catch(_){ } }
   function __pauseMenuBgm(){ try{ if (window.Sounds && Sounds.startBgm && Sounds.startBgm.pause) Sounds.startBgm.pause(); }catch(_){ } }
 
-  function __isFS(){
-    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || document.mozFullScreenElement);
-  }
-
-  // Start or stop based on fullscreen state
-  function __fsHandler(){
-    if (__isFS()) __playMenuBgmIfFS(); else __pauseMenuBgm();
-  }
-  document.addEventListener('fullscreenchange', __fsHandler);
-  document.addEventListener('webkitfullscreenchange', __fsHandler);
-  document.addEventListener('msfullscreenchange', __fsHandler);
-  document.addEventListener('mozfullscreenchange', __fsHandler);
+  try{
+    window.addEventListener('gameStartMenuOpened', __playMenuBgm, { passive:true });
+  }catch(_){}
 
   // Pause AFTER loading overlay completes or when real game begins.
   (function hookLoading(){

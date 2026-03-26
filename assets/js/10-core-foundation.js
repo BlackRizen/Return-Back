@@ -369,15 +369,14 @@ Sounds.bossEntrance.loop = true; Sounds.bossEntrance.volume = 1.0;
     function playSound(aud){ try{ const n=aud.cloneNode(); n.volume=aud.volume; n.play().catch(()=>{}); }catch{} }
     function startMusic(){ Sounds.bgm.currentTime=0; Sounds.bgm.play().catch(()=>{}); }
     function startMenuMusic(){
-  // Only play in fullscreen
-  try {
-    const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || document.mozFullScreenElement;
-    if (!fsEl) return;
-  } catch(_) {}
-
-  if (Sounds.startBgm.paused) {
-    Sounds.startBgm.play().catch(()=>{});
-  }
+  try{
+    if (!Sounds || !Sounds.startBgm) return false;
+    if (Sounds.startBgm.paused) {
+      Sounds.startBgm.currentTime = Sounds.startBgm.currentTime || 0;
+      Sounds.startBgm.play().catch(()=>{});
+    }
+    return true;
+  }catch(_){ return false; }
 }
     ['pointerdown','keydown','touchstart'].forEach(ev=>{
       window.addEventListener(ev, ()=>{ if(document.getElementById('startScreen').style.display!=='none') startMenuMusic(); }, { once:true })

@@ -74,7 +74,13 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     }, ms);
   }
   window.__showLoadingOverlay = show;
-  // Start overlay is now shown only from the real Start button click flow.
+
+  // No-flash: show overlay as soon as finger/mouse goes down
+  if (startBtn){
+    const onDown = ()=> show(3000);
+    startBtn.addEventListener('pointerdown', onDown, { once:true, capture:true });
+    startBtn.addEventListener('touchstart', onDown, { once:true, capture:true, passive:false });
+  }
 })();
 
 // === Robust starter: schedule the real game start once ===
@@ -100,7 +106,106 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     scheduled = true;
     timer = setTimeout(tryStart, ms|0);
   };
-  // Start scheduling is now driven only by the real Start button click flow.
+  function resumeUnlockedAudio(){
+    try{
+      if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended'){
+        Howler.ctx.resume();
+      }
+    }catch(_){}
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC && AC.prototype && AC.prototype.resume) {
+        // no direct instance handle here; this path is best-effort only
+      }
+    }catch(_){}
+  }
+
+  function openStartMenu(){
+    try{
+      var loader = document.getElementById('loaderScreen');
+      if (loader){
+        loader.classList.add('fade-out');
+        loader.style.display = 'none';
+        loader.style.opacity = '0';
+        loader.style.pointerEvents = 'none';
+      }
+    }catch(_){}
+    try{
+      var fadeOv = document.querySelector('.fade-overlay');
+      if (fadeOv){
+        fadeOv.classList.add('hide');
+        fadeOv.style.display = 'none';
+        fadeOv.style.opacity = '0';
+        fadeOv.style.pointerEvents = 'none';
+      }
+    }catch(_){}
+    try{
+      var loadingOv = document.getElementById('loadingOverlay');
+      if (loadingOv){
+        loadingOv.classList.remove('visible');
+        loadingOv.classList.remove('show');
+        loadingOv.style.display = 'none';
+        loadingOv.style.opacity = '0';
+        loadingOv.style.pointerEvents = 'none';
+      }
+    }catch(_){}
+    try{
+      var startScreen = document.getElementById('startScreen') || document.querySelector('.start-screen');
+      if (startScreen){
+        startScreen.style.visibility = 'visible';
+        startScreen.style.display = 'flex';
+        startScreen.style.opacity = '1';
+        startScreen.style.pointerEvents = 'auto';
+      }
+    }catch(_){}
+    try{
+      ['startBtn','optionsBtn','exitBtn'].forEach(function(id){
+        var btn = document.getElementById(id);
+        if (btn){
+          btn.removeAttribute('disabled');
+          btn.disabled = false;
+        }
+      });
+    }catch(_){}
+    try{ window.dispatchEvent(new CustomEvent('gameUserStarted')); }catch(_){}
+    try{ window.dispatchEvent(new CustomEvent('gameStartMenuOpened')); }catch(_){}
+    return true;
+  }
+
+  function playStartMenuSound(){
+    resumeUnlockedAudio();
+    try{
+      if (typeof window.startMenuMusic === 'function') return !!window.startMenuMusic();
+      if (window.GameApp && window.GameApp.domains && window.GameApp.domains.audio && typeof window.GameApp.domains.audio.startMenuMusic === 'function'){
+        return !!window.GameApp.domains.audio.startMenuMusic();
+      }
+    }catch(_){}
+    try{
+      if (window.Sounds && Sounds.startBgm){
+        Sounds.startBgm.currentTime = Sounds.startBgm.currentTime || 0;
+        Sounds.startBgm.play().catch(function(){});
+        return true;
+      }
+    }catch(_){}
+    return false;
+  }
+
+  window.gameApi = window.gameApi || {};
+  window.gameApi.openStartMenu = openStartMenu;
+  window.gameApi.playStartMenuSound = playStartMenuSound;
+  window.gameApi.openStartMenuAndPlaySound = function(){
+    openStartMenu();
+    return playStartMenuSound();
+  };
+  // Also schedule on earliest gesture so hiding the button doesn't kill the click
+  try{
+    const btn = document.getElementById('startBtn');
+    if (btn){
+      const onDown = function(){ window.__showLoadingOverlay && window.__showLoadingOverlay(3000); window.__startGameAfter(3000); };
+      btn.addEventListener('pointerdown', onDown, { once:true, capture:true });
+      btn.addEventListener('touchstart', onDown, { once:true, capture:true, passive:false });
+    }
+  }catch(_){}
 })();
 
 // === SOURCE: #EnableButtonsAfterDelayOnTap ===
