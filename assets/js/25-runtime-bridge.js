@@ -31,99 +31,152 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
   app.runtime.actionLocks = app.runtime.actionLocks || {};
   app.runtime.runState = app.runtime.runState || { finalized:false, finalizeReason:'', finalizedAt:'' };
   app.runtime.timeFX = app.runtime.timeFX || { scale:1, untilTs:0, token:0, reason:'' };
-app.debugFlags = app.debugFlags || {};
-app.debugFlags.oneShotKill = app.debugFlags.oneShotKill === true;
+  app.debugFlags = app.debugFlags || {};
+  app.debugFlags.oneShotKill = app.debugFlags.oneShotKill === true;
 
-function syncOneShotKill(flag){
-  var enabled = !!flag;
-  app.debugFlags.oneShotKill = enabled;
-  try{ window.__ONE_SHOT_KILL = enabled; }catch(_){ }
-  try{
-    if (window.localStorage){
-      if (enabled) localStorage.setItem('GAMEPOWER_ONE_SHOT_KILL', '1');
-      else localStorage.removeItem('GAMEPOWER_ONE_SHOT_KILL');
-    }
-  }catch(_){ }
-  try{
-    window.dispatchEvent(new CustomEvent('debug:oneshot-changed', { detail:{ enabled:enabled } }));
-  }catch(_){ }
-  return enabled;
-}
-try{
-  if (window.localStorage && localStorage.getItem('GAMEPOWER_ONE_SHOT_KILL') === '1'){
-    app.debugFlags.oneShotKill = true;
+  function syncOneShotKill(flag){
+    var enabled = !!flag;
+    app.debugFlags.oneShotKill = enabled;
+    try{ window.__ONE_SHOT_KILL = enabled; }catch(_){ }
+    try{
+      if (window.localStorage){
+        if (enabled) localStorage.setItem('GAMEPOWER_ONE_SHOT_KILL', '1');
+        else localStorage.removeItem('GAMEPOWER_ONE_SHOT_KILL');
+      }
+    }catch(_){ }
+    try{
+      window.dispatchEvent(new CustomEvent('debug:oneshot-changed', { detail:{ enabled:enabled } }));
+    }catch(_){ }
+    return enabled;
   }
-}catch(_){ }
-try{ window.__ONE_SHOT_KILL = !!app.debugFlags.oneShotKill; }catch(_){ }
-window.__isOneShotKillEnabled = function(){ return !!(app.debugFlags && app.debugFlags.oneShotKill); };
-window.__setOneShotKillMode = syncOneShotKill;
-window.__computeEnemyDamage = function(enemy, baseDamage){
-  var dmg = Math.max(0, Number(baseDamage) || 0);
-  if (!enemy) return dmg;
+
   try{
-    if (window.__isOneShotKillEnabled && window.__isOneShotKillEnabled()){
-      var hpNow = Number(enemy.hp);
-      var maxHp = Number(enemy.maxHp);
-      var lethal = Number.isFinite(hpNow) && hpNow > 0 ? hpNow : (Number.isFinite(maxHp) && maxHp > 0 ? maxHp : dmg);
-      return Math.max(dmg, lethal || 0);
+    if (window.localStorage && localStorage.getItem('GAMEPOWER_ONE_SHOT_KILL') === '1'){
+      app.debugFlags.oneShotKill = true;
     }
   }catch(_){ }
-  return dmg;
-};
 
+  try{ window.__ONE_SHOT_KILL = !!app.debugFlags.oneShotKill; }catch(_){ }
 
-function nowIso(){ return new Date().toISOString(); }
-function nowMs(){
-  try{ return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }catch(_){ return Date.now(); }
-}
-app.runtime.getTimeScale = function(ts){
-  try{
-    var fx = this.timeFX || (this.timeFX = { scale:1, untilTs:0, token:0, reason:'' });
-    var now = (typeof ts === 'number') ? ts : nowMs();
-    var scale = Number(fx.scale);
-    if (!Number.isFinite(scale) || scale <= 0 || !fx.untilTs || now >= fx.untilTs){
-      if (fx.untilTs && now >= fx.untilTs) this.clearSlowMotion('expired');
+  window.__isOneShotKillEnabled = function(){ return !!(app.debugFlags && app.debugFlags.oneShotKill); };
+  window.__setOneShotKillMode = syncOneShotKill;
+  window.__computeEnemyDamage = function(enemy, baseDamage){
+    var dmg = Math.max(0, Number(baseDamage) || 0);
+    if (!enemy) return dmg;
+    try{
+      if (window.__isOneShotKillEnabled && window.__isOneShotKillEnabled()){
+        var hpNow = Number(enemy.hp);
+        var maxHp = Number(enemy.maxHp);
+        var lethal = Number.isFinite(hpNow) && hpNow > 0 ? hpNow : (Number.isFinite(maxHp) && maxHp > 0 ? maxHp : dmg);
+        return Math.max(dmg, lethal || 0);
+      }
+    }catch(_){ }
+    return dmg;
+  };
+
+  function nowIso(){ return new Date().toISOString(); }
+  function nowMs(){
+    try{ return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }catch(_){ return Date.now(); }
+  }
+
+  function safeNumber(getter, fallback){
+    try{
+      var value = getter();
+      return Number.isFinite(value) ? value : fallback;
+    }catch(_){
+      return fallback;
+    }
+  }
+
+  function currentRunEpoch(){
+    try{
+      var run = app.session && app.session.state && app.session.state.run;
+      return ((run && run.epoch) | 0) || 1;
+    }catch(_){
       return 1;
     }
-    return Math.max(0.05, Math.min(1, scale));
-  }catch(_){ return 1; }
-};
-app.runtime.startSlowMotion = function(scale, durationMs, reason){
-  var s = Number(scale);
-  var dur = Number(durationMs);
-  if (!Number.isFinite(s)) s = 1;
-  if (!Number.isFinite(dur)) dur = 0;
-  s = Math.max(0.08, Math.min(1, s));
-  dur = Math.max(0, dur);
-  if (dur <= 0 || s >= 0.999) return false;
-  var now = nowMs();
-  this.timeFX = this.timeFX || { scale:1, untilTs:0, token:0, reason:'' };
-  this.timeFX.scale = s;
-  this.timeFX.untilTs = now + dur;
-  this.timeFX.reason = reason || '';
-  this.timeFX.token = (this.timeFX.token || 0) + 1;
-  app.debug = app.debug || {};
-  app.debug.lastTimeFx = {
-    at: nowIso(),
-    scale: s,
-    durationMs: Math.round(dur),
-    reason: reason || ''
+  }
+
+  function notifyParentRunFinished(reason, finalizedAt){
+    try{
+      if (!window.parent || window.parent === window) return false;
+
+      var iso = finalizedAt || nowIso();
+      var payload = {
+        type: 'game-run-finished',
+        reason: reason || 'finalized',
+        score: safeNumber(function(){ return score; }, 0),
+        level: safeNumber(function(){ return currentLevel; }, 1),
+        kills: safeNumber(function(){ return kills; }, 0),
+        finalizedAt: iso,
+        runId: 'epoch-' + currentRunEpoch() + '-' + iso
+      };
+
+      window.parent.postMessage(payload, '*');
+
+      app.debug = app.debug || {};
+      app.debug.lastParentRunPost = {
+        at: nowIso(),
+        payload: payload
+      };
+
+      return true;
+    }catch(_){
+      return false;
+    }
+  }
+
+  app.runtime.getTimeScale = function(ts){
+    try{
+      var fx = this.timeFX || (this.timeFX = { scale:1, untilTs:0, token:0, reason:'' });
+      var now = (typeof ts === 'number') ? ts : nowMs();
+      var scale = Number(fx.scale);
+      if (!Number.isFinite(scale) || scale <= 0 || !fx.untilTs || now >= fx.untilTs){
+        if (fx.untilTs && now >= fx.untilTs) this.clearSlowMotion('expired');
+        return 1;
+      }
+      return Math.max(0.05, Math.min(1, scale));
+    }catch(_){ return 1; }
   };
-  return true;
-};
-app.runtime.clearSlowMotion = function(reason){
-  this.timeFX = this.timeFX || { scale:1, untilTs:0, token:0, reason:'' };
-  this.timeFX.scale = 1;
-  this.timeFX.untilTs = 0;
-  this.timeFX.reason = reason || '';
-  this.timeFX.token = (this.timeFX.token || 0) + 1;
-  app.debug = app.debug || {};
-  app.debug.lastTimeFxCleared = {
-    at: nowIso(),
-    reason: reason || ''
+
+  app.runtime.startSlowMotion = function(scale, durationMs, reason){
+    var s = Number(scale);
+    var dur = Number(durationMs);
+    if (!Number.isFinite(s)) s = 1;
+    if (!Number.isFinite(dur)) dur = 0;
+    s = Math.max(0.08, Math.min(1, s));
+    dur = Math.max(0, dur);
+    if (dur <= 0 || s >= 0.999) return false;
+    var now = nowMs();
+    this.timeFX = this.timeFX || { scale:1, untilTs:0, token:0, reason:'' };
+    this.timeFX.scale = s;
+    this.timeFX.untilTs = now + dur;
+    this.timeFX.reason = reason || '';
+    this.timeFX.token = (this.timeFX.token || 0) + 1;
+    app.debug = app.debug || {};
+    app.debug.lastTimeFx = {
+      at: nowIso(),
+      scale: s,
+      durationMs: Math.round(dur),
+      reason: reason || ''
+    };
+    return true;
   };
-  return true;
-};
+
+  app.runtime.clearSlowMotion = function(reason){
+    this.timeFX = this.timeFX || { scale:1, untilTs:0, token:0, reason:'' };
+    this.timeFX.scale = 1;
+    this.timeFX.untilTs = 0;
+    this.timeFX.reason = reason || '';
+    this.timeFX.token = (this.timeFX.token || 0) + 1;
+    app.debug = app.debug || {};
+    app.debug.lastTimeFxCleared = {
+      at: nowIso(),
+      reason: reason || ''
+    };
+    return true;
+  };
+
   function stopLoopSafe(){
     try{
       if (app.actions && typeof app.actions.stopMainLoop === 'function') return app.actions.stopMainLoop('runtime-finalize');
@@ -131,17 +184,20 @@ app.runtime.clearSlowMotion = function(reason){
     try{ if (app.loop && typeof app.loop.stop === 'function') return app.loop.stop(); }catch(_){ }
     return false;
   }
+
   function clearBossFlags(){
     try{ window.__bossSpawnPending = false; }catch(_){ }
     try{ window.__bossEntrancePlaying = false; }catch(_){ }
     try{ window.__transitionStarting = false; }catch(_){ }
   }
+
   function finishBossIntroSession(){
     try{
       var bossFlow = app.domains && app.domains.get && app.domains.get('bossFlow');
       if (bossFlow && typeof bossFlow.finishIntro === 'function') bossFlow.finishIntro();
     }catch(_){ }
   }
+
   app.runtime.trackTimeout = function(fn, ms, label){
     var runtime = this;
     var id = setTimeout(function(){
@@ -151,6 +207,7 @@ app.runtime.clearSlowMotion = function(reason){
     try{ runtime.trackedAsync.set(id, { kind:'timeout', label:label || '' }); }catch(_){ }
     return id;
   };
+
   app.runtime.trackInterval = function(fn, ms, label){
     var id = setInterval(function(){
       try{ if (typeof fn === 'function') fn(); }catch(_){ }
@@ -158,6 +215,7 @@ app.runtime.clearSlowMotion = function(reason){
     try{ this.trackedAsync.set(id, { kind:'interval', label:label || '' }); }catch(_){ }
     return id;
   };
+
   app.runtime.trackFrame = function(fn, label){
     var runtime = this;
     var id = requestAnimationFrame(function(ts){
@@ -167,10 +225,12 @@ app.runtime.clearSlowMotion = function(reason){
     try{ runtime.trackedAsync.set(id, { kind:'frame', label:label || '' }); }catch(_){ }
     return id;
   };
+
   app.runtime.untrackAsync = function(id){
     try{ this.trackedAsync.delete(id); }catch(_){ }
     return id;
   };
+
   app.runtime.clearTrackedAsync = function(){
     try{
       this.trackedAsync.forEach(function(meta, id){
@@ -186,6 +246,7 @@ app.runtime.clearSlowMotion = function(reason){
     }catch(_){ }
     return true;
   };
+
   app.runtime.clearSpawnQueue = function(reason){
     try{
       app.spawnControl = app.spawnControl || window.GameApp && GameApp.spawnControl || { paused:false, queued:false, lastReason:'' };
@@ -198,6 +259,7 @@ app.runtime.clearSlowMotion = function(reason){
     }catch(_){ }
     return true;
   };
+
   app.runtime.lockAction = function(key, durationMs, meta){
     if (!key) return false;
     if (this.runState && this.runState.finalized) return false;
@@ -216,6 +278,7 @@ app.runtime.clearSlowMotion = function(reason){
     this.actionLocks[key] = lock;
     return lock;
   };
+
   app.runtime.releaseAction = function(key){
     var lock = this.actionLocks[key];
     if (!lock) return false;
@@ -229,9 +292,11 @@ app.runtime.clearSlowMotion = function(reason){
     delete this.actionLocks[key];
     return true;
   };
+
   app.runtime.isActionLocked = function(key){
     return !!(key && this.actionLocks && this.actionLocks[key]);
   };
+
   app.runtime.clearActionLocks = function(){
     try{
       for (var key in this.actionLocks){
@@ -248,6 +313,7 @@ app.runtime.clearSlowMotion = function(reason){
     }catch(_){ }
     return true;
   };
+
   app.runtime.clearCombatFlow = function(reason, options){
     options = options || {};
     this.clearTrackedAsync();
@@ -266,26 +332,46 @@ app.runtime.clearSlowMotion = function(reason){
     app.debug.lastFlowReset = { at:nowIso(), reason:reason || '', stopLoop:options.stopLoop !== false };
     return true;
   };
+
   app.runtime.finalizeRunEnd = function(reason, options){
     options = options || {};
+
     if (this.runState.finalized){
       if (options.stopLoop !== false) stopLoopSafe();
       return false;
     }
+
+    var finalReason = reason || 'finalized';
+    var finalizedAt = nowIso();
+
     this.runState.finalized = true;
-    this.runState.finalizeReason = reason || 'finalized';
-    this.runState.finalizedAt = nowIso();
-    try{ if (typeof gameEnded !== 'undefined') gameEnded = (options.markGameEnded === false ? gameEnded : true); }catch(_){ }
-    this.clearCombatFlow(reason || 'finalized', options);
+    this.runState.finalizeReason = finalReason;
+    this.runState.finalizedAt = finalizedAt;
+
+    try{
+      if (typeof gameEnded !== 'undefined') {
+        gameEnded = (options.markGameEnded === false ? gameEnded : true);
+      }
+    }catch(_){ }
+
+    this.clearCombatFlow(finalReason, options);
+
     if (options.stopLoop !== false) stopLoopSafe();
+
     app.debug = app.debug || {};
     app.debug.lastFinalize = {
-      at: this.runState.finalizedAt,
-      reason: this.runState.finalizeReason,
+      at: finalizedAt,
+      reason: finalReason,
       stopLoop: options.stopLoop !== false
     };
+
+    try{
+      notifyParentRunFinished(finalReason, finalizedAt);
+    }catch(_){ }
+
     return true;
   };
+
   app.runtime.resetRunState = function(reason){
     this.runState.finalized = false;
     this.runState.finalizeReason = reason || '';
