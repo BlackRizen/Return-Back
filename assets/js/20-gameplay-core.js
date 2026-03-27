@@ -4795,15 +4795,35 @@ if(controlsLocked) return { hit:false, reason:'controls-locked' };
       try{ if (window.GameApp && GameApp.runtime && typeof GameApp.runtime.finalizeRunEnd === 'function') GameApp.runtime.finalizeRunEnd('player-death', { stopLoop:true }); }catch(_){}
     }
     function timeUp(){
-      if(gameEnded) return; gameEnded = true; try{ hideBossHud(); }catch(_){ } timeLeft = 0;
-      controlsLocked = true; keys.a=keys.d=keys.w=keys.s=keys.f=false; player.vx = 0;
-      try{ enemySpawnsEnabled = false; }catch(_){}
-      try{ levelTransitionActive = false; }catch(_){}
-      fadeEnemies(); try{ Sounds.bgm.pause(); }catch{}
-       try{ Sounds && Sounds.bossEntrance && Sounds.bossEntrance.pause && Sounds.bossEntrance.pause(); }catch{}
-      try{ if (window.GameApp && GameApp.runtime && typeof GameApp.runtime.clearCombatFlow === 'function') GameApp.runtime.clearCombatFlow('time-up', { stopLoop:false, keepTransition:false }); }catch(_){}
-      shipState = 'warmup'; warmupTimer = 2.0; shipEl.classList.add('wiggle'); playSound(Sounds.shipWarmup);
-      }
+  if(gameEnded) return;
+
+  gameEnded = true;
+  try{ hideBossHud(); }catch(_){ }
+  timeLeft = 0;
+
+  controlsLocked = true;
+  keys.a = keys.d = keys.w = keys.s = keys.f = false;
+  player.vx = 0;
+
+  try{ enemySpawnsEnabled = false; }catch(_){}
+  try{ levelTransitionActive = false; }catch(_){}
+
+  fadeEnemies();
+
+  try{ Sounds.bgm.pause(); }catch(_){}
+  try{ Sounds && Sounds.bossEntrance && Sounds.bossEntrance.pause && Sounds.bossEntrance.pause(); }catch(_){}
+
+  try{
+    if (window.GameApp && GameApp.runtime && typeof GameApp.runtime.finalizeRunEnd === 'function') {
+      GameApp.runtime.finalizeRunEnd('time-up', { stopLoop:false, keepTransition:false });
+    }
+  }catch(_){}
+
+  shipState = 'warmup';
+  warmupTimer = 2.0;
+  shipEl.classList.add('wiggle');
+  playSound(Sounds.shipWarmup);
+}
 
     function beginLevelTransition(){
       // Stop any new spawns and freeze gameplay timers

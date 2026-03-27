@@ -333,44 +333,44 @@ window.GameApp && window.GameApp.registerModule && window.GameApp.registerModule
     return true;
   };
 
-  app.runtime.finalizeRunEnd = function(reason, options){
-    options = options || {};
+app.runtime.finalizeRunEnd = function(reason, options){
+  options = options || {};
 
-    if (this.runState.finalized){
-      if (options.stopLoop !== false) stopLoopSafe();
-      return false;
-    }
-
-    var finalReason = reason || 'finalized';
-    var finalizedAt = nowIso();
-
-    this.runState.finalized = true;
-    this.runState.finalizeReason = finalReason;
-    this.runState.finalizedAt = finalizedAt;
-
-    try{
-      if (typeof gameEnded !== 'undefined') {
-        gameEnded = (options.markGameEnded === false ? gameEnded : true);
-      }
-    }catch(_){ }
-
-    this.clearCombatFlow(finalReason, options);
-
+  if (this.runState.finalized){
     if (options.stopLoop !== false) stopLoopSafe();
+    return false;
+  }
 
-    app.debug = app.debug || {};
-    app.debug.lastFinalize = {
-      at: finalizedAt,
-      reason: finalReason,
-      stopLoop: options.stopLoop !== false
-    };
+  var finalReason = reason || 'finalized';
+  var finalizedAt = nowIso();
 
-    try{
-      notifyParentRunFinished(finalReason, finalizedAt);
-    }catch(_){ }
+  this.runState.finalized = true;
+  this.runState.finalizeReason = finalReason;
+  this.runState.finalizedAt = finalizedAt;
 
-    return true;
+  try{
+    if (typeof gameEnded !== 'undefined') {
+      gameEnded = (options.markGameEnded === false ? gameEnded : true);
+    }
+  }catch(_){ }
+
+  try{
+    notifyParentRunFinished(finalReason, finalizedAt);
+  }catch(_){ }
+
+  this.clearCombatFlow(finalReason, options);
+
+  if (options.stopLoop !== false) stopLoopSafe();
+
+  app.debug = app.debug || {};
+  app.debug.lastFinalize = {
+    at: finalizedAt,
+    reason: finalReason,
+    stopLoop: options.stopLoop !== false
   };
+
+  return true;
+};
 
   app.runtime.resetRunState = function(reason){
     this.runState.finalized = false;
