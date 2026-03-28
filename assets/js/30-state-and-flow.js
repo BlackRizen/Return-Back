@@ -1141,7 +1141,35 @@ window.__startGameAfter && window.__startGameAfter(3000);
     document.getElementById('exitBtn').addEventListener('click', async ()=>{
       const ok = confirm('Exit the game?');
       if(!ok) return;
-      try{ if (document.fullscreenElement) await document.exitFullscreen(); }catch{}
+
+      try{ if (document.fullscreenElement) await document.exitFullscreen(); }catch(_){}
+
+      try{
+        if (window.stopMenuMusic) window.stopMenuMusic();
+      }catch(_){}
+
+      try{
+        if (window.Sounds && Sounds.startBgm){
+          Sounds.startBgm.pause();
+          Sounds.startBgm.currentTime = 0;
+        }
+      }catch(_){}
+
+      let handedOffToParent = false;
+
+      try{
+        if (window.parent && window.parent !== window){
+          window.parent.postMessage({
+            type: 'game-exit',
+            event: 'game-exit',
+            source: 'start-menu-exit'
+          }, '*');
+          handedOffToParent = true;
+        }
+      }catch(_){}
+
+      if (handedOffToParent) return;
+
       window.close();
       setTimeout(()=>{
         document.body.innerHTML = `
